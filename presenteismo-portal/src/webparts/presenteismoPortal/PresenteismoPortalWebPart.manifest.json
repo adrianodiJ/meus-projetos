@@ -1,0 +1,32 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx/client-side-web-part-manifest.schema.json",
+  "id": "6a86c44e-2f14-4f16-bad3-b4f049511779",
+  "alias": "PresenteismoPortalWebPart",
+  "componentType": "WebPart",
+
+  // The "*" signifies that the version should be taken from the package.json
+  "version": "*",
+  "manifestVersion": 2,
+
+  // If true, the component can only be installed on sites where Custom Script is allowed.
+  "requiresCustomScript": false,
+  "supportedHosts": ["SharePointWebPart", "SharePointFullPage"],
+  "supportsThemeVariants": true,
+
+  "preconfiguredEntries": [{
+    "groupId": "5c03119e-3074-46fd-976b-c60198311f70", // Advanced
+    "group": { "default": "Advanced" },
+    "title": { "default": "Presenteísmo Portal" },
+    "description": { "default": "Lançamento de presença, painel de presenteísmo, acompanhamento e relatórios" },
+    "officeFabricIconFontName": "CheckList",
+    "properties": {
+      "titulo": "QRA LATAM : Brasil",
+      "subtitulo": "Presenteísmo Digital Portal",
+      "frase": "Presença hoje. Resultado sempre.",
+      "imagemBanner": "",
+      "adminEmail": "adriano.diasjunior@dhl.com",
+      "intervaloAtualizacao": 15,
+      "siteUrl": ""
+    }
+  }]
+}

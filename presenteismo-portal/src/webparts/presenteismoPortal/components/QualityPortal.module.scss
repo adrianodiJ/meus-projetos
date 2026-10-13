@@ -1,0 +1,1724 @@
+@use 'sass:color';
+
+$amarelo: #ffcc00;
+$vermelho: #d40511;
+$escuro: #1d1f23;
+$escuro2: #2a2d33;
+$texto: #1f2328;
+$suave: #616a75;
+$borda: #e4e7eb;
+$fundo: #f3f4f6;
+$raio: 10px;
+$sombra: 0 1px 2px rgba(16, 24, 40, 0.06), 0 4px 14px rgba(16, 24, 40, 0.06);
+$fonte: 'Segoe UI', 'Segoe UI Web (West European)', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+
+// ---------------------------------------------------------------- casca
+.app {
+  font-family: $fonte;
+  color: $texto;
+  background: $fundo;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  width: 100%;
+  box-sizing: border-box;
+
+  * {
+    box-sizing: border-box;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    margin: 0;
+    color: $texto;
+  }
+
+  button {
+    font-family: inherit;
+  }
+
+  a {
+    color: #1f6fd1;
+  }
+}
+
+// Cobre a página do SharePoint (barra do Microsoft 365, cabeçalho do site). Abaixo das camadas do
+// Fluent UI (painéis, menus e diálogos usam z-index 1000000).
+.telaCheia {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  height: 100vh;
+  min-height: 0;
+
+  .corpo {
+    flex: 1;
+    min-height: 0;
+  }
+
+  .principal {
+    overflow-y: auto;
+  }
+}
+
+// ---------------------------------------------------------------- barra superior
+.topo {
+  background: $amarelo;
+  height: 64px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 0 20px;
+  position: relative;
+  z-index: 5;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.06);
+}
+
+.botaoMenu {
+  display: none !important;
+  color: $texto !important;
+}
+
+.marca {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  min-width: 0;
+  color: $texto;
+
+  img {
+    height: 22px;
+    width: auto;
+  }
+
+  b {
+    font-size: 19px;
+    font-weight: 700;
+    white-space: nowrap;
+    padding-left: 18px;
+    border-left: 1px solid rgba(0, 0, 0, 0.25);
+  }
+}
+
+.marcaSub {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  white-space: nowrap;
+  padding-left: 16px;
+  border-left: 1px solid rgba(0, 0, 0, 0.25);
+}
+
+.busca {
+  flex: 1;
+  max-width: 400px;
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff;
+  border-radius: 6px;
+  padding: 0 12px;
+  height: 38px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+
+  i {
+    color: $suave;
+  }
+
+  input {
+    border: 0;
+    outline: 0;
+    flex: 1;
+    font-family: inherit;
+    font-size: 13px;
+    background: transparent;
+    min-width: 0;
+  }
+}
+
+.topoAcoes {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.iconeTopo {
+  position: relative;
+  border: 0;
+  background: transparent;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  font-size: 19px;
+  color: $texto;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.45);
+  }
+}
+
+.badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 17px;
+  height: 17px;
+  border-radius: 9px;
+  background: $vermelho;
+  color: #fff;
+  font-size: 10.5px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+}
+
+.usuario {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  padding: 4px 8px 4px 4px;
+  border-radius: 26px;
+  color: $texto;
+  text-align: left;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.45);
+  }
+}
+
+.usuarioTexto {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+  max-width: 180px;
+
+  b {
+    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  small {
+    font-size: 11.5px;
+    color: #3b3b3b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.avatar {
+  border-radius: 50%;
+  background: $vermelho;
+  color: #fff;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  object-fit: cover;
+  border: 2px solid #fff;
+}
+
+// ---------------------------------------------------------------- corpo / menu lateral
+.corpo {
+  display: flex;
+  flex: 1;
+  min-height: calc(100vh - 64px);
+}
+
+.lateral {
+  width: 220px;
+  flex-shrink: 0;
+  background: $escuro;
+  color: #e6e6e6;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 22px 0 26px;
+
+  ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  li button {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font-size: 14px;
+    padding: 15px 20px;
+    cursor: pointer;
+    text-align: left;
+    border-left: 4px solid transparent;
+
+    i {
+      font-size: 17px;
+      width: 20px;
+      text-align: center;
+    }
+
+    &:hover {
+      background: $escuro2;
+    }
+  }
+}
+
+.lateralAtivo {
+  background: $escuro2 !important;
+  border-left-color: $amarelo !important;
+  color: #fff !important;
+  font-weight: 600;
+
+  i {
+    color: $amarelo;
+  }
+}
+
+// Contador de pendências do item "Administração": círculo vermelho com anel, número centralizado
+// e largura que cresce só quando o número tem mais de um dígito.
+.lateralBadge {
+  margin-left: auto;
+  flex-shrink: 0;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 7px;
+  box-sizing: border-box;
+  border-radius: 12px;
+  background: $vermelho;
+  color: #fff;
+  font-size: 12.5px;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 0 3px rgba(212, 5, 17, 0.3);
+}
+
+.lema {
+  padding: 0 20px;
+
+  i {
+    display: block;
+    width: 30px;
+    height: 3px;
+    background: $amarelo;
+    margin-bottom: 14px;
+  }
+
+  p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.55;
+    color: #f2f2f2;
+  }
+}
+
+.principal {
+  flex: 1;
+  min-width: 0;
+  padding: 0 0 28px;
+}
+
+.aviso {
+  margin: 14px 24px 0;
+  border-radius: 8px;
+}
+
+.centro {
+  min-height: 50vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 24px;
+}
+
+.suave {
+  color: $suave;
+}
+
+.link {
+  border: 0;
+  background: transparent;
+  color: #1f6fd1;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+// ---------------------------------------------------------------- banner
+.hero {
+  position: relative;
+  height: 214px;
+  overflow: hidden;
+  background: #1b1b1f;
+}
+
+.heroArte {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.heroFoto {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center right;
+}
+
+.heroSombra {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(15, 15, 18, 0.95) 0%, rgba(15, 15, 18, 0.82) 34%, rgba(15, 15, 18, 0.15) 62%, rgba(15, 15, 18, 0) 75%);
+}
+
+.heroTexto {
+  position: relative;
+  padding: 30px 36px;
+  max-width: 640px;
+  color: #fff;
+
+  small {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-weight: 600;
+  }
+
+  h1 {
+    color: #fff;
+    font-size: 40px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    margin: 4px 0 8px;
+  }
+
+  p {
+    margin: 0 0 12px;
+    font-size: 15px;
+    color: #eaeaea;
+  }
+
+  em {
+    color: $amarelo;
+    font-size: 17px;
+    font-weight: 600;
+  }
+}
+
+.heroLema {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 230px;
+  background: linear-gradient(100deg, transparent 0 14%, rgba(16, 16, 18, 0.9) 14%);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-left: 66px;
+
+  span {
+    color: #fff;
+    font-size: 21px;
+    font-weight: 800;
+    font-style: italic;
+    text-transform: uppercase;
+    line-height: 1.12;
+    border-left: 3px solid $vermelho;
+    padding-left: 14px;
+    margin-left: -18px;
+  }
+
+  i {
+    display: block;
+    width: 30px;
+    height: 3px;
+    background: $amarelo;
+    margin: 12px 0 0;
+  }
+}
+
+// ---------------------------------------------------------------- home
+.home {
+  display: flex;
+  flex-direction: column;
+}
+
+// A tabela de tickets ocupa a largura toda (sem quebra de texto); os gráficos e as notificações ficam abaixo dela.
+.homePrincipal {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  padding: 18px 20px 0;
+}
+
+.homeGraficos {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+.homeRodape {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px 260px;
+  gap: 16px;
+}
+
+.prazoAtrasado {
+  color: $vermelho;
+  font-weight: 700;
+}
+.cartaoFluxo {
+  min-width: 0;
+}
+
+// ---------------------------------------------------------------- cartões
+.cartao {
+  background: #fff;
+  border: 1px solid $borda;
+  border-radius: $raio;
+  padding: 16px 18px;
+  box-shadow: $sombra;
+  min-width: 0;
+}
+
+.cartaoTopo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+
+  h3 {
+    font-size: 16px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+}
+
+.contador {
+  background: $vermelho;
+  color: #fff;
+  font-size: 11px;
+  border-radius: 10px;
+  padding: 1px 7px;
+}
+
+// ---------------------------------------------------------------- indicadores
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.kpi {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #fff;
+  border: 1px solid $borda;
+  border-radius: $raio;
+  padding: 14px 14px;
+  box-shadow: $sombra;
+  cursor: pointer;
+  text-align: left;
+  min-width: 0;
+  transition: transform 0.12s, box-shadow 0.12s;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(16, 24, 40, 0.1);
+  }
+}
+
+.kpiIcone {
+  width: 50px;
+  height: 50px;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+// Valor e legenda do indicador centralizados no espaço entre o ícone e a variação.
+.kpiTexto {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  min-width: 0;
+
+  b {
+    font-size: 28px;
+    line-height: 1.1;
+  }
+
+  span {
+    font-size: 12.5px;
+    color: $texto;
+  }
+}
+
+.kpiVariacao {
+  margin-left: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+
+  b {
+    font-size: 14px;
+    white-space: nowrap;
+  }
+
+  small {
+    font-size: 10px;
+    color: $suave;
+    white-space: nowrap;
+  }
+}
+
+// ---------------------------------------------------------------- atalhos
+.atalhos {
+  display: grid;
+  // o número de atalhos varia com o nível de acesso
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 12px;
+}
+
+.atalho {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #fff;
+  border: 1px solid $borda;
+  border-radius: $raio;
+  padding: 14px;
+  box-shadow: $sombra;
+  cursor: pointer;
+  text-align: left;
+  min-width: 0;
+  color: $texto;
+
+  > i {
+    font-size: 24px;
+    flex-shrink: 0;
+  }
+
+  span {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  b {
+    font-size: 13.5px;
+  }
+
+  small {
+    font-size: 11.5px;
+    color: $suave;
+  }
+
+  &:hover {
+    border-color: #c9ced6;
+  }
+}
+
+.atalhoPrincipal {
+  background: $vermelho;
+  border-color: $vermelho;
+  color: #fff;
+
+  small {
+    color: #ffe3e5;
+  }
+
+  &:hover {
+    background: color.adjust($vermelho, $lightness: -5%);
+    border-color: color.adjust($vermelho, $lightness: -5%);
+  }
+}
+
+// ---------------------------------------------------------------- tabela
+.tabelaWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+// Barra acima de cada tabela: abas (quando houver) + botão "Atualizar" à direita.
+.tabelaTopo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid $borda;
+
+  .abas {
+    flex: 1;
+    min-width: 0;
+    border-bottom: 0;
+  }
+
+  .btnAtualizar {
+    margin-bottom: 4px;
+  }
+}
+
+.btnAtualizar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid #c9ced6;
+  border-radius: 6px;
+  background: #fff;
+  color: $texto;
+  font-size: 13px;
+  white-space: nowrap;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    border-color: $vermelho;
+    color: $vermelho;
+  }
+
+  &:disabled {
+    cursor: progress;
+    opacity: 0.7;
+  }
+}
+
+.girando {
+  animation: girar 0.9s linear infinite;
+}
+
+@keyframes girar {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.abas {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid $borda;
+  overflow-x: auto;
+
+  button {
+    border: 0;
+    background: transparent;
+    padding: 10px 14px;
+    font-size: 13.5px;
+    color: $texto;
+    cursor: pointer;
+    white-space: nowrap;
+    border-bottom: 3px solid transparent;
+  }
+}
+
+.abaAtiva {
+  color: $vermelho !important;
+  font-weight: 600;
+  border-bottom-color: $vermelho !important;
+}
+
+.tabelaRolagem {
+  overflow-x: auto;
+}
+
+// Tabela de tickets: colunas em porcentagem (colgroup) e texto que quebra linha, então nunca há rolagem horizontal.
+.tabelaSemRolagem {
+  overflow-x: auto;
+  container-type: inline-size;
+
+  .tabelaTickets {
+    min-width: 960px;
+  }
+}
+
+// Em caixas estreitas (notebook de 1366 px com a coluna lateral da Home) a coluna Setor sai da tabela; o dado
+// continua no painel do ticket. As demais colunas dividem o espaço, então nada é cortado nem rola.
+@container (max-width: 780px) {
+  .colSetor {
+    display: none;
+  }
+}
+
+.tabela.tabelaTickets {
+  table-layout: fixed;
+  font-size: 12.5px;
+
+  th {
+    white-space: normal;
+    padding: 10px 4px;
+  }
+
+  td {
+    padding: 9px 4px;
+    overflow-wrap: break-word;
+    word-break: normal;
+  }
+
+  // status e andamento ("Em análise Desenvolvedor - Atrasado") ficam numa linha só
+  .pill {
+    white-space: nowrap;
+    line-height: 1.25;
+    padding: 3px 9px;
+  }
+
+  // e-mail do desenvolvedor não quebra no meio; se faltar espaço, é cortado com reticências
+  .colDev {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.tabela {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+
+  // cabeçalho e dados centralizados em todas as colunas
+  th {
+    text-align: center;
+    background: #f6f7f9;
+    font-weight: 600;
+    padding: 10px 12px;
+    white-space: nowrap;
+    border-bottom: 1px solid $borda;
+  }
+
+  td {
+    text-align: center;
+    padding: 9px 12px;
+    border-bottom: 1px solid #eff1f4;
+    vertical-align: middle;
+  }
+
+  .btnMais {
+    margin: 0 auto;
+  }
+
+  tbody tr {
+    cursor: pointer;
+
+    &:hover {
+      background: #fafbfc;
+    }
+  }
+}
+
+.ordenar {
+  border: 0;
+  background: transparent;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.colId {
+  font-weight: 600;
+}
+
+.btnMais {
+  height: 28px !important;
+  width: 28px !important;
+}
+
+.pill {
+  display: inline-block;
+  padding: 3px 14px;
+  border-radius: 14px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.paginacao {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: $suave;
+  flex-wrap: wrap;
+
+  > div {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+  }
+
+  button:not([class*='ms-Button']) {
+    border: 1px solid transparent;
+    background: transparent;
+    min-width: 30px;
+    height: 30px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+  }
+}
+
+.paginaAtiva {
+  border-color: #c9ced6 !important;
+  background: #fff !important;
+  font-weight: 700;
+}
+
+// ---------------------------------------------------------------- fluxo de aprovação
+.btnAmarelo {
+  background: $amarelo !important;
+  border-color: $amarelo !important;
+  color: $texto !important;
+  font-weight: 600;
+
+  &:hover {
+    background: color.adjust($amarelo, $lightness: -6%) !important;
+  }
+}
+
+// Ação destrutiva (excluir): contorno vermelho, sem preenchimento, para não competir com a ação principal.
+.btnPerigo {
+  color: #a4262c !important;
+  border-color: #a4262c !important;
+  background: #fff !important;
+
+  &:hover {
+    background: #fdf3f4 !important;
+  }
+
+  &:global(.is-disabled) {
+    color: #a19f9d !important;
+    border-color: #e1dfdd !important;
+    background: #f3f2f1 !important;
+  }
+}
+
+// Rodapé do painel de ticket: ações à esquerda, excluir isolado à direita.
+.rodapePainel {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.btnVerde {
+  background: #14632b !important;
+  border-color: #14632b !important;
+
+  &:hover {
+    background: #0f4d21 !important;
+  }
+
+  &:global(.is-disabled) {
+    background: #f3f2f1 !important;
+    border-color: #e1dfdd !important;
+    color: #a19f9d !important;
+  }
+}
+
+.btnVermelho {
+  background: $vermelho !important;
+  border-color: $vermelho !important;
+
+  &:hover {
+    background: color.adjust($vermelho, $lightness: -6%) !important;
+  }
+
+  &:global(.is-disabled) {
+    background: #f3f2f1 !important;
+    border-color: #e1dfdd !important;
+    color: #a19f9d !important;
+  }
+}
+
+.pagina {
+  padding: 20px 24px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.paginaTopo {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+
+  h2 {
+    font-size: 24px;
+    font-weight: 700;
+  }
+
+  p {
+    margin: 4px 0 0;
+    color: $suave;
+    font-size: 13.5px;
+  }
+}
+
+.linhaBotoes {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.colunaBotoes {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.vazio {
+  text-align: center;
+  padding: 36px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+
+  > i {
+    font-size: 36px;
+    color: #b6bcc4;
+  }
+
+  h4 {
+    font-size: 16px;
+  }
+
+  p {
+    margin: 0;
+    color: $suave;
+    font-size: 13px;
+  }
+}
+
+.filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: flex-end;
+  margin-bottom: 14px;
+}
+
+// Ação à direita da barra de filtros (botão Atualizar): fica na mesma linha, sem criar uma nova.
+.filtrosAcao {
+  margin-left: auto;
+  align-self: flex-end;
+  display: inline-flex;
+}
+
+.filtroBusca {
+  flex: 1 1 260px;
+}
+
+.filtroCampo {
+  width: 170px;
+}
+
+.filtroData {
+  width: 140px;
+
+  // o DatePicker reserva 5px para mensagem de status mesmo vazia: desalinhava das listas suspensas
+  [class*='statusMessage'] {
+    display: none;
+  }
+}
+
+.chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+
+  button {
+    border: 1px solid #c9ced6;
+    background: #fff;
+    border-radius: 16px;
+    padding: 5px 14px;
+    font-size: 13px;
+    cursor: pointer;
+
+    &:hover {
+      border-color: $vermelho;
+      color: $vermelho;
+    }
+  }
+}
+
+// ---------------------------------------------------------------- formulário
+.formGrade {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 16px;
+  align-items: start;
+}
+
+// ================================================================ Presenteísmo
+$verde: #1e9e3e;
+$verdeFundo: #dcfce7;
+$vermelhoFundo: #fee2e2;
+$alertaFundo: #fef3c7;
+$alertaTexto: #92400e;
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: $suave;
+
+  input,
+  select,
+  textarea {
+    font: inherit;
+    font-weight: 400;
+    font-size: 13px;
+    color: $texto;
+    padding: 7px 10px;
+    border: 1px solid #c9ced6;
+    border-radius: 6px;
+    background: #fff;
+    max-width: 100%;
+    min-height: 34px;
+
+    &:focus {
+      outline: 0;
+      border-color: $amarelo;
+      box-shadow: 0 0 0 3px rgba(255, 204, 0, 0.35);
+    }
+  }
+}
+
+.campoErro {
+  border-color: $vermelho !important;
+}
+
+.botao {
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 7px 14px;
+  border: 1px solid #c9ced6;
+  border-radius: 6px;
+  background: #fff;
+  color: $texto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+
+  &:hover:not(:disabled) {
+    background: #f6f7f9;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+}
+
+.botaoAmarelo {
+  @extend .botao;
+  background: $amarelo;
+  border-color: $amarelo;
+  font-weight: 600;
+
+  &:hover:not(:disabled) {
+    background: color.adjust($amarelo, $lightness: -6%);
+  }
+}
+
+.botaoVermelho {
+  @extend .botao;
+  background: $vermelho;
+  border-color: $vermelho;
+  color: #fff;
+  font-weight: 600;
+
+  &:hover:not(:disabled) {
+    background: color.adjust($vermelho, $lightness: -6%);
+  }
+}
+
+.mudo {
+  color: $suave;
+  font-size: 12px;
+}
+
+.fileira {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+
+.grade {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 12px;
+}
+
+.grade2 {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.aviso2 {
+  background: $alertaFundo;
+  color: $alertaTexto;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+}
+
+.vazio2 {
+  text-align: center;
+  padding: 40px 20px;
+
+  h4 {
+    font-size: 17px;
+    margin-bottom: 6px;
+  }
+
+  p {
+    margin: 0 auto;
+    max-width: 52ch;
+    color: $suave;
+    font-size: 13.5px;
+  }
+}
+
+// seletor de operação na barra superior
+.operacao {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  padding-left: 16px;
+  border-left: 1px solid rgba(0, 0, 0, 0.25);
+
+  select {
+    font: inherit;
+    font-weight: 700;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    background: rgba(255, 255, 255, 0.55);
+    border-radius: 6px;
+    padding: 4px 8px;
+    color: $texto;
+  }
+}
+
+// indicador principal (anel) + cartões do painel executivo
+.painelTopo {
+  display: grid;
+  grid-template-columns: 1.5fr repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.indicador {
+  background: #fff;
+  border: 1px solid $borda;
+  border-radius: $raio;
+  padding: 12px 16px;
+  box-shadow: $sombra;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+
+  span {
+    font-size: 11px;
+    font-weight: 600;
+    color: $suave;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  b {
+    font-size: 24px;
+    line-height: 1.2;
+    font-variant-numeric: tabular-nums;
+  }
+
+  small {
+    font-size: 11px;
+    color: $suave;
+  }
+}
+
+.indicadorAnel {
+  @extend .indicador;
+  flex-direction: row;
+  align-items: center;
+  gap: 14px;
+
+  > div {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  b {
+    font-size: 17px;
+  }
+}
+
+.anel {
+  width: 84px;
+  height: 84px;
+  flex: none;
+}
+
+.anelValor {
+  font-size: 25px;
+  font-weight: 700;
+  fill: $texto;
+}
+
+.trilha {
+  height: 8px;
+  background: #eef0f3;
+  border-radius: 99px;
+  position: relative;
+
+  i {
+    display: block;
+    height: 100%;
+    border-radius: 99px;
+  }
+
+  b {
+    position: absolute;
+    top: -3px;
+    width: 2px;
+    height: 14px;
+    background: $texto;
+    opacity: 0.45;
+  }
+}
+
+.turno {
+  padding: 10px 0;
+  border-bottom: 1px solid #eff1f4;
+
+  &:last-child {
+    border-bottom: 0;
+  }
+}
+
+.turnoTopo {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 6px;
+
+  span {
+    font-weight: 700;
+    font-size: 17px;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.linhaGestor {
+  display: grid;
+  grid-template-columns: minmax(110px, 200px) 1fr 70px;
+  gap: 14px;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #eff1f4;
+
+  &:last-child {
+    border-bottom: 0;
+  }
+
+  .valor {
+    text-align: right;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.ofensor {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #eff1f4;
+  flex-wrap: wrap;
+
+  &:last-of-type {
+    border-bottom: 0;
+  }
+
+  > div {
+    flex: 1;
+    min-width: 130px;
+  }
+}
+
+.rank {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #eef0f3;
+  display: inline-grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 12px;
+  flex: none;
+}
+
+.rankTop {
+  @extend .rank;
+  background: $vermelho;
+  color: #fff;
+}
+
+.faltaPill {
+  background: $vermelhoFundo;
+  border-radius: 99px;
+  padding: 2px 12px;
+  font-weight: 700;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+// Sim / Não da lista de presença
+.alterna {
+  display: inline-flex;
+  background: #eef0f3;
+  border-radius: 99px;
+  padding: 2px;
+
+  button {
+    border: 0;
+    background: transparent;
+    padding: 4px 16px;
+    font-size: 12px;
+    font-weight: 600;
+    color: $suave;
+    border-radius: 99px;
+    cursor: pointer;
+  }
+}
+
+.alternaSim {
+  background: $verde !important;
+  color: #fff !important;
+}
+
+.alternaNao {
+  background: $vermelho !important;
+  color: #fff !important;
+}
+
+.selo {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 700;
+  background: $alertaFundo;
+  color: $alertaTexto;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.seloOk {
+  @extend .selo;
+  background: $verdeFundo;
+  color: #14632b;
+}
+
+.seloTemp {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 7px;
+  border-radius: 99px;
+  font-size: 10px;
+  font-weight: 700;
+  background: #eef0f3;
+  color: $suave;
+  border: 1px solid $borda;
+}
+
+.retro {
+  border: 1px solid $vermelho;
+  color: $vermelho;
+  border-radius: 99px;
+  padding: 2px 10px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+// tabelas largas de edição: texto à esquerda e sem quebra
+.tabelaEsq {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+
+  th {
+    background: #f6f7f9;
+    font-weight: 600;
+    padding: 9px 12px;
+    text-align: left;
+    white-space: nowrap;
+    border-bottom: 1px solid $borda;
+  }
+
+  td {
+    padding: 8px 12px;
+    border-bottom: 1px solid #eff1f4;
+    vertical-align: middle;
+    white-space: nowrap;
+  }
+
+  tbody tr:hover td {
+    background: #fafbfc;
+  }
+
+  .num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.linhaOk td {
+  background: $verdeFundo;
+}
+
+.linhaPend td {
+  background: $vermelhoFundo;
+}
+
+.linhaPend td.pend,
+.linhaOk td.pend {
+  background: $alertaFundo;
+  color: $alertaTexto;
+  font-weight: 700;
+  text-align: center;
+}
+
+.elo {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: $texto;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  text-align: left;
+
+  &:hover {
+    color: $vermelho;
+  }
+}
+
+.legenda {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin: 0 0 10px;
+  font-size: 12px;
+  color: $suave;
+
+  i {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    margin-right: 6px;
+    border: 1px solid $borda;
+  }
+}
+
+.barraFixa {
+  position: sticky;
+  bottom: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  background: #fff;
+  border: 1px solid $borda;
+  border-radius: $raio;
+  box-shadow: 0 8px 24px rgba(16, 24, 40, 0.12);
+  z-index: 3;
+
+  > div {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+}
+
+.caixaDrop {
+  position: relative;
+
+  summary {
+    cursor: pointer;
+    color: $suave;
+    font-size: 12px;
+    list-style: none;
+    padding: 4px 10px;
+    border: 1px solid #c9ced6;
+    border-radius: 99px;
+    display: inline-block;
+    background: #fff;
+  }
+
+  &[open] summary {
+    border-color: $amarelo;
+  }
+}
+
+.caixaLista {
+  position: absolute;
+  z-index: 4;
+  margin-top: 6px;
+  background: #fff;
+  border: 1px solid $borda;
+  border-radius: 8px;
+  padding: 8px;
+  box-shadow: 0 8px 24px rgba(16, 24, 40, 0.14);
+  max-height: 260px;
+  overflow: auto;
+  min-width: 230px;
+
+  label {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 6px;
+    font-size: 13px;
+    font-weight: 400;
+    color: $texto;
+    white-space: nowrap;
+  }
+}
+
+.mapa {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+  margin: 12px 0;
+}
+
+.spanBarra {
+  display: flex;
+  height: 100%;
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.cartaoPedido {
+  border: 1px solid $borda;
+  border-radius: $raio;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+}
+
+@media (max-width: 1100px) {
+  .painelTopo {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .grade2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .botaoMenu {
+    display: inline-flex !important;
+  }
+
+  .lateral {
+    position: absolute;
+    top: 64px;
+    bottom: 0;
+    left: 0;
+    z-index: 20;
+    transform: translateX(-100%);
+    transition: transform 0.15s;
+  }
+
+  .lateralAberta {
+    transform: none;
+  }
+
+  .busca {
+    display: none;
+  }
+
+  .kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx-build/package-solution.schema.json",
+  "solution": {
+    "name": "presenteismo-portal-client-side-solution",
+    "id": "e47040ff-e21f-4787-b6e2-05c26ac52161",
+    "version": "1.0.0.0",
+    "includeClientSideAssets": true,
+    "skipFeatureDeployment": true,
+    "isDomainIsolated": false,
+    "developer": {
+      "name": "QRA LATAM : Brasil",
+      "websiteUrl": "",
+      "privacyUrl": "",
+      "termsOfUseUrl": "",
+      "mpnId": "Undefined-1.21.1"
+    },
+    "metadata": {
+      "shortDescription": { "default": "Presenteísmo - lançamento de presença, painel e relatórios" },
+      "longDescription": { "default": "Portal de controle de presenteísmo: lançamento diário de presença por gestor, painel executivo, acompanhamento, headcount por planilha e relatórios em Excel." },
+      "screenshotPaths": [],
+      "videoUrl": "",
+      "categories": []
+    },
+    "features": [
+      {
+        "title": "Presenteismo Portal - Recursos",
+        "description": "Recursos do web part Presenteísmo Portal.",
+        "id": "c8a2ccb9-995e-4cb2-9004-0458d73121e3",
+        "version": "1.0.0.0"
+      }
+    ]
+  },
+  "paths": {
+    "zippedPackage": "solution/presenteismo-portal.sppkg"
+  }
+}

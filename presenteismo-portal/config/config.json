@@ -1,0 +1,18 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx-build/config.2.0.schema.json",
+  "version": "2.0",
+  "bundles": {
+    "presenteismo-portal-web-part": {
+      "components": [
+        {
+          "entrypoint": "./lib/webparts/presenteismoPortal/PresenteismoPortalWebPart.js",
+          "manifest": "./src/webparts/presenteismoPortal/PresenteismoPortalWebPart.manifest.json"
+        }
+      ]
+    }
+  },
+  "externals": {},
+  "localizedResources": {
+    "PresenteismoPortalWebPartStrings": "lib/webparts/presenteismoPortal/loc/{locale}.js"
+  }
+}
