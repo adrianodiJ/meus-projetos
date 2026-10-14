@@ -2,16 +2,14 @@
 
 export type Turno = 'PRIMEIRO' | 'SEGUNDO' | 'ADM';
 /**
- * Perfis gravados na lista PRES_Usuarios:
- * - admin: mesmos acessos do administrador principal (aprovado só por ele);
- * - acesso: coordenador com operações extras liberadas por um administrador.
- * Coordenadores não ficam nessa lista: vêm do headcount (coluna GESTOR), a cada upload.
+ * Perfil gravado na lista PRES_Usuarios: "acesso" = coordenador com operações extras liberadas por um administrador.
+ * Coordenadores vêm do headcount (coluna GESTOR) e administradores são os proprietários do site do SharePoint.
  */
-export type Perfil = 'admin' | 'acesso';
+export type Perfil = 'acesso';
 
 export const TURNOS: Turno[] = ['PRIMEIRO', 'SEGUNDO', 'ADM'];
 export const ROTULO_TURNO: Record<string, string> = { PRIMEIRO: '1º turno', SEGUNDO: '2º turno', ADM: 'ADM', GERAL: 'Geral' };
-export const PERFIS: Perfil[] = ['admin', 'acesso'];
+export const PERFIS: Perfil[] = ['acesso'];
 
 /** Motivos de ausência que entram no cálculo do presenteísmo. */
 export const MOTIVOS_FALTA: string[] = ['Falta injustificada', 'Atestado'];
@@ -119,8 +117,8 @@ export interface IGestores {
   em?: string;
 }
 
-/** "admin" = virar administrador (só o administrador principal aprova); "op:<id>" = ver outra operação. */
-export type TipoPedido = 'admin' | string;
+/** "op:<id>" = coordenador pedindo para ver outra operação. */
+export type TipoPedido = string;
 
 export interface IPedido {
   id: number;

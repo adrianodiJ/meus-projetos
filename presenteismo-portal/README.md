@@ -12,7 +12,7 @@ banner, cartões de indicadores e tabelas) e as funcionalidades da demo de Prese
 | Relatórios | Excel "Histórico ABS" e "Resumo + Lançamentos" |
 | Meu acesso | Perfil do usuário (visitante, coordenador, administrador) e pedidos de acesso |
 | Headcount (admin) | Importa a planilha .xlsx (aba TT ATIVOS), substitui a base, cria/atualiza os coordenadores, span of control |
-| Usuários e acessos (admin) | Coordenadores vindos do headcount (vínculo de e-mail), pedidos de acesso, administradores, operações liberadas |
+| Usuários e acessos (admin) | Coordenadores vindos do headcount (vínculo de e-mail), pedidos de acesso a outras operações, operações liberadas |
 | Administração (admin) | Cria as listas, operações, parâmetros, cadastro ABS, histórico |
 
 ## Gerar o .sppkg
@@ -47,8 +47,8 @@ O pacote sai em `sharepoint/solution/presenteismo-portal.sppkg`
   pelo nome; se não for achado, a pessoa é reconhecida pelo nome de exibição ao abrir o portal, e o administrador pode informar o e-mail.
 - O coordenador lança a presença só da própria equipe, exporta relatórios e **só vê as operações em que aparece no headcount**.
   Para ver outra operação ele pede em **Meu acesso**, e um administrador libera.
-- **Administradores** têm os mesmos acessos do administrador principal (propriedade do web part). Qualquer pessoa pode pedir em
-  **Meu acesso**, mas **só o administrador principal aprova** (ou adiciona direto em Usuários e acessos).
+- **Administradores são os proprietários do site do SharePoint** (permissão Gerenciar site), além do administrador principal
+  da propriedade do web part. Para tornar alguém administrador, adicione a pessoa aos Proprietários do site; não há aprovação no portal.
 - `PRES_Dados` e `PRES_Usuarios` ficam somente leitura para os membros do site: administradores precisam ser proprietários do site.
   Lançar presença e pedir acesso exige ser Membro. O filtro é feito na tela; a segurança real é a das permissões do SharePoint.
 

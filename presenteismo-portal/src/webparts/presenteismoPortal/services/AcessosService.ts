@@ -84,7 +84,7 @@ export class AcessosService {
     try {
       itens = await this._pedidos.itens<IPedidoLista>('Id,Title,Nome,Em,Tipo', undefined, 'Id asc');
     } catch (e) {
-      // lista criada antes da coluna Tipo: lê sem ela (pedidos antigos = administrador)
+      // lista criada antes da coluna Tipo: lê sem ela (pedidos antigos, descartados pelo portal)
       if ((e as SpError).status !== 400) throw e;
       itens = await this._pedidos.itens<IPedidoLista>('Id,Title,Nome,Em', undefined, 'Id asc');
     }
@@ -110,18 +110,26 @@ export class AcessosService {
   public async pedirAcesso(email: string, nome: string, tipo: TipoPedido): Promise<void> {
     const ja = (await this.pedidos()).filter((p) => p.email === email.toLowerCase() && p.tipo === tipo);
     if (ja.length) return;
-    const corpo = { Title: email.toLowerCase(), Nome: nome, Em: new Date().toISOString() };
-    try {
-      await this._pedidos.criar({ ...corpo, Tipo: tipo });
-    } catch (e) {
-      // lista sem a coluna Tipo (versão anterior): o pedido de administrador ainda funciona
-      if ((e as SpError).status !== 400 || tipo !== 'admin') throw e;
-      await this._pedidos.criar(corpo);
-    }
+    await this._pedidos.criar({ Title: email.toLowerCase(), Nome: nome, Em: new Date().toISOString(), Tipo: tipo });
   }
 
   public excluirPedido(id: number): Promise<void> {
     return this._pedidos.excluir(id);
+  }
+
+  /**
+   * Administrador do portal = quem administra o site do SharePoint (proprietário: permissão "Gerenciar site",
+   * ou administrador do conjunto de sites).
+   */
+  public async donoDoSite(): Promise<boolean> {
+    try {
+      const p = await this._sp.get<{ High?: string | number; Low?: string | number }>('web/effectiveBasePermissions');
+      // ManageWeb = bit 31 da parte baixa (0x40000000)
+      const low = Number(p && p.Low) || 0;
+      return Math.floor(low / 0x40000000) % 2 === 1;
+    } catch {
+      return false;
+    }
   }
 
   /** Nome de exibição no diretório (também confirma que a conta existe). */

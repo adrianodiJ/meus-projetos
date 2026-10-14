@@ -8,16 +8,14 @@ import type { IDados } from './tipos';
 import { Aviso, Avatar, Cartao, Kpi, Pagina, Vazio } from './ui';
 
 /**
- * Usuários e acessos (administradores):
+ * Usuários e acessos (administradores = proprietários do site do SharePoint):
  * - coordenadores vêm do headcount (um por GESTOR) e aqui só se ajusta o e-mail vinculado;
- * - pedidos de acesso: administrador (só o administrador principal aprova) ou outra operação;
- * - administradores e liberações extras de operação.
+ * - pedidos de coordenadores para ver outra operação e as liberações já feitas.
  */
-export const Usuarios: React.FC<{ d: IDados; listasOk: boolean; adminPrincipal: string }> = ({ d, listasOk, adminPrincipal }) => {
+export const Usuarios: React.FC<{ d: IDados; listasOk: boolean }> = ({ d, listasOk }) => {
   const [busca, setBusca] = React.useState('');
   const [filtroOp, setFiltroOp] = React.useState('');
   const [soSemEmail, setSoSemEmail] = React.useState(false);
-  const [novoAdmin, setNovoAdmin] = React.useState('');
   const [buscando, setBuscando] = React.useState('');
 
   if (!listasOk) {
@@ -28,8 +26,6 @@ export const Usuarios: React.FC<{ d: IDados; listasOk: boolean; adminPrincipal: 
     );
   }
 
-  const principal = d.acesso.principal;
-  const admins = d.usuarios.filter((u) => u.perfil === 'admin' && u.email !== adminPrincipal).sort((a, b) => ordenarPt(a.nome || a.email, b.nome || b.email));
   const liberacoes = d.usuarios.filter((u) => u.perfil === 'acesso' && u.ops.length).sort((a, b) => ordenarPt(a.nome || a.email, b.nome || b.email));
   const semEmail = d.gestores.filter((g) => !g.email).length;
   const nomeGestor = (email: string): string => (d.gestores.filter((g) => g.email === email)[0] || { g: '' }).g;
@@ -85,15 +81,10 @@ export const Usuarios: React.FC<{ d: IDados; listasOk: boolean; adminPrincipal: 
     const atual = d.usuarios.filter((u) => u.email === p.email && u.perfil === 'acesso')[0];
     const nome = p.nome || p.email;
     d.gravar(async () => {
-      if (p.tipo === 'admin') {
-        await d.servicos.acessos.salvarUsuario({ email: p.email, nome, perfil: 'admin', ops: [] });
-        d.registrar('aprovou administrador', `${nome} (${p.email})`);
-      } else {
-        await d.servicos.acessos.salvarUsuario({ id: atual ? atual.id : undefined, email: p.email, nome, perfil: 'acesso', ops: unicos([...(atual ? atual.ops : []), op]) });
-        d.registrar('liberou operação', `${nome} → ${d.opNome(op)}`);
-      }
+      await d.servicos.acessos.salvarUsuario({ id: atual ? atual.id : undefined, email: p.email, nome, perfil: 'acesso', ops: unicos([...(atual ? atual.ops : []), op]) });
+      d.registrar('liberou operação', `${nome} → ${d.opNome(op)}`);
       await d.servicos.acessos.excluirPedido(p.id);
-    }, p.tipo === 'admin' ? `${nome} agora é administrador.` : `${nome} pode ver ${d.opNome(op)}.`).catch(() => undefined);
+    }, `${nome} pode ver ${d.opNome(op)}.`).catch(() => undefined);
   };
 
   const recusar = (p: IPedido): void => {
@@ -103,39 +94,7 @@ export const Usuarios: React.FC<{ d: IDados; listasOk: boolean; adminPrincipal: 
     }, 'Pedido recusado.').catch(() => undefined);
   };
 
-  // ---------------------------------------------------------------- administradores e liberações
-  const adicionarAdmin = async (): Promise<void> => {
-    const email = novoAdmin.trim().toLowerCase();
-    if (!emailDhl(email)) {
-      d.avisar('erro', 'Use o e-mail corporativo (@dhl.com).');
-      return;
-    }
-    if (email === adminPrincipal || admins.some((u) => u.email === email)) {
-      d.avisar('erro', 'Essa pessoa já é administradora.');
-      return;
-    }
-    const nome = await d.servicos.acessos.resolverNome(email);
-    if (!nome) {
-      d.avisar('erro', `Não encontrei ${email} no diretório.`);
-      return;
-    }
-    const ok = await d.gravar(async () => {
-      await d.servicos.acessos.salvarUsuario({ email, nome, perfil: 'admin', ops: [] });
-      const pedido = d.pedidos.filter((p) => p.email === email && p.tipo === 'admin')[0];
-      if (pedido) await d.servicos.acessos.excluirPedido(pedido.id);
-      d.registrar('adicionou administrador', `${nome} (${email})`);
-    }, `${nome} agora é administrador.`);
-    if (ok) setNovoAdmin('');
-  };
-
-  const removerAdmin = (u: IUsuario): void => {
-    if (!window.confirm(`Remover ${u.nome || u.email} dos administradores?`)) return;
-    d.gravar(async () => {
-      await d.servicos.acessos.excluirUsuario(u.id);
-      d.registrar('removeu administrador', u.nome || u.email);
-    }, 'Administrador removido.').catch(() => undefined);
-  };
-
+  // ---------------------------------------------------------------- liberações
   const tirarOp = (u: IUsuario, op: string): void => {
     const ops = u.ops.filter((o) => o !== op);
     d.gravar(async () => {
@@ -151,14 +110,14 @@ export const Usuarios: React.FC<{ d: IDados; listasOk: boolean; adminPrincipal: 
     .filter((g) => (!filtroOp || g.op === filtroOp) && (!soSemEmail || !g.email) && (!q || nz(`${g.g} ${g.email} ${g.nome || ''}`).indexOf(q) >= 0))
     .sort((a, b) => ordenarPt(d.opNome(a.op), d.opNome(b.op)) || ordenarPt(a.g, b.g));
 
-  const rotuloPedido = (p: IPedido): string => (p.tipo === 'admin' ? 'Administrador' : `Ver a operação ${d.opNome(pedidoOp(p.tipo))}`);
+  const rotuloPedido = (p: IPedido): string => `Ver a operação ${d.opNome(pedidoOp(p.tipo))}`;
 
   return (
-    <Pagina titulo="Usuários e acessos" subtitulo="Coordenadores vêm do headcount; aqui ficam os vínculos de e-mail, os pedidos de acesso e os administradores">
+    <Pagina titulo="Usuários e acessos" subtitulo="Coordenadores vêm do headcount e administradores são os proprietários do site; aqui ficam os vínculos de e-mail e os pedidos de acesso a outras operações">
       <div className={styles.kpis}>
         <Kpi valor={int(d.gestores.length)} legenda="Coordenadores" icone="People" cor="#1F6FD1" detalhe="gestores no headcount" />
         <Kpi valor={int(semEmail)} legenda="Sem e-mail vinculado" icone="Unknown" cor="#F28C00" detalhe={semEmail ? 'vinculam pelo nome no 1º acesso' : 'todos vinculados'} />
-        <Kpi valor={int(admins.length + 1)} legenda="Administradores" icone="Permissions" cor="#4B5563" detalhe="contando o principal" />
+        <Kpi valor={int(liberacoes.length)} legenda="Com operação extra" icone="Unlock" cor="#4B5563" detalhe="coordenadores liberados" />
         <Kpi valor={int(d.pedidos.length)} legenda="Pedidos de acesso" icone="AddFriend" cor="#D40511" detalhe={d.pedidos.length ? 'aguardando análise' : 'nenhum pendente'} />
       </div>
 
@@ -166,7 +125,6 @@ export const Usuarios: React.FC<{ d: IDados; listasOk: boolean; adminPrincipal: 
         <Cartao titulo={`Pedidos de acesso (${d.pedidos.length})`}>
           <div className={styles.pedidos}>
             {d.pedidos.map((p) => {
-              const podeAprovar = p.tipo !== 'admin' || principal;
               const gestor = nomeGestor(p.email);
               return (
                 <div key={p.id} className={styles.pedido}>
@@ -182,18 +140,12 @@ export const Usuarios: React.FC<{ d: IDados; listasOk: boolean; adminPrincipal: 
                     </small>
                   </div>
                   <div className={styles.pedidoAcoes}>
-                    {podeAprovar ? (
-                      <>
-                        <button type="button" className={styles.botaoAmarelo} onClick={() => aprovar(p)}>
-                          Aprovar
-                        </button>
-                        <button type="button" className={styles.botao} onClick={() => recusar(p)}>
-                          Recusar
-                        </button>
-                      </>
-                    ) : (
-                      <span className={styles.mudo}>Só o administrador principal aprova</span>
-                    )}
+                    <button type="button" className={styles.botaoAmarelo} onClick={() => aprovar(p)}>
+                      Aprovar
+                    </button>
+                    <button type="button" className={styles.botao} onClick={() => recusar(p)}>
+                      Recusar
+                    </button>
                   </div>
                 </div>
               );
@@ -278,97 +230,38 @@ export const Usuarios: React.FC<{ d: IDados; listasOk: boolean; adminPrincipal: 
         )}
       </Cartao>
 
-      <div className={styles.usuariosGrade}>
-        <Cartao titulo={`Administradores (${admins.length + 1})`}>
-          <p className={styles.mudo} style={{ margin: '0 0 12px' }}>
-            Têm os mesmos acessos do administrador principal. Só ele aprova novos administradores. Para gravar cadastros também precisam ser proprietários do site.
+      <Cartao titulo={`Operações liberadas a coordenadores (${liberacoes.length})`}>
+        <p className={styles.mudo} style={{ margin: '0 0 12px' }}>
+          Coordenador só vê as operações em que aparece no headcount. Aqui ficam as outras que um administrador liberou a pedido dele.
+        </p>
+        {liberacoes.length === 0 ? (
+          <p className={styles.mudo} style={{ margin: 0 }}>
+            Nenhuma liberação extra.
           </p>
-          <div className={styles.tabelaRolagem}>
-            <table className={styles.tabelaEsq}>
-              <tbody>
-                <tr>
+        ) : (
+          <table className={styles.tabelaEsq}>
+            <tbody>
+              {liberacoes.map((u) => (
+                <tr key={u.id}>
                   <td>
-                    <div className={styles.pessoa}>
-                      <Avatar nome={adminPrincipal} tamanho={34} />
-                      <div>
-                        <b>{d.nomeDe(adminPrincipal)}</b>
-                        <div className={styles.mudo}>{adminPrincipal}</div>
-                      </div>
+                    <b>{u.nome || u.email}</b>
+                    <div className={styles.mudo}>{u.email}</div>
+                  </td>
+                  <td>
+                    <div className={styles.chips}>
+                      {u.ops.map((o) => (
+                        <button key={o} type="button" className={`${styles.chip} ${styles.chipAtivo}`} title={`Retirar ${d.opNome(o)}`} onClick={() => tirarOp(u, o)}>
+                          {d.opNome(o)} <Icon iconName="Cancel" />
+                        </button>
+                      ))}
                     </div>
                   </td>
-                  <td>
-                    <span className={styles.selo}>PRINCIPAL</span>
-                  </td>
                 </tr>
-                {admins.map((u) => (
-                  <tr key={u.id}>
-                    <td>
-                      <div className={styles.pessoa}>
-                        <Avatar nome={u.nome || u.email} tamanho={34} />
-                        <div>
-                          <b>{u.nome || u.email}</b>
-                          <div className={styles.mudo}>{u.email}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      {principal ? (
-                        <button type="button" className={styles.botaoIcone} title="Remover administrador" aria-label={`Remover ${u.nome || u.email}`} onClick={() => removerAdmin(u)}>
-                          <Icon iconName="UserRemove" />
-                        </button>
-                      ) : null}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          {principal && (
-            <div className={styles.fileira} style={{ marginTop: 12 }}>
-              <label className={styles.campo}>
-                Adicionar administrador
-                <input type="email" value={novoAdmin} placeholder="nome.sobrenome@dhl.com" onChange={(e) => setNovoAdmin(e.target.value)} />
-              </label>
-              <button type="button" className={styles.botaoAmarelo} onClick={() => adicionarAdmin().catch(() => undefined)}>
-                <Icon iconName="Permissions" /> Adicionar
-              </button>
-            </div>
-          )}
-        </Cartao>
-
-        <Cartao titulo={`Operações liberadas a coordenadores (${liberacoes.length})`}>
-          <p className={styles.mudo} style={{ margin: '0 0 12px' }}>
-            Coordenador só vê as operações em que aparece no headcount. Aqui ficam as outras que um administrador liberou a pedido dele.
-          </p>
-          {liberacoes.length === 0 ? (
-            <p className={styles.mudo} style={{ margin: 0 }}>
-              Nenhuma liberação extra.
-            </p>
-          ) : (
-            <table className={styles.tabelaEsq}>
-              <tbody>
-                {liberacoes.map((u) => (
-                  <tr key={u.id}>
-                    <td>
-                      <b>{u.nome || u.email}</b>
-                      <div className={styles.mudo}>{u.email}</div>
-                    </td>
-                    <td>
-                      <div className={styles.chips}>
-                        {u.ops.map((o) => (
-                          <button key={o} type="button" className={`${styles.chip} ${styles.chipAtivo}`} title={`Retirar ${d.opNome(o)}`} onClick={() => tirarOp(u, o)}>
-                            {d.opNome(o)} <Icon iconName="Cancel" />
-                          </button>
-                        ))}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </Cartao>
-      </div>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </Cartao>
     </Pagina>
   );
 };

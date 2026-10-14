@@ -5,7 +5,7 @@ import { nomeCombina, unicos } from './util';
 export interface IAcesso {
   /** administrador principal (propriedade do web part) */
   principal: boolean;
-  /** administrador: o principal ou alguém aprovado por ele */
+  /** administrador: o principal ou proprietário do site do SharePoint */
   admin: boolean;
   /** coordenador: aparece como GESTOR no headcount de alguma operação */
   coordenador: boolean;
@@ -27,10 +27,17 @@ export interface IAcesso {
  * - coordenador (gestor no headcount) fica preso às operações em que aparece; outras só com acesso liberado;
  * - administrador vê e faz tudo.
  */
-export function calcularAcesso(email: string, nome: string, adminPrincipal: string, usuarios: IUsuario[], gestores: IGestor[]): IAcesso {
+export function calcularAcesso(
+  email: string,
+  nome: string,
+  adminPrincipal: string,
+  donoDoSite: boolean,
+  usuarios: IUsuario[],
+  gestores: IGestor[]
+): IAcesso {
   const principal = !!email && email === adminPrincipal;
   const meus = usuarios.filter((u) => u.email === email);
-  const admin = principal || meus.some((u) => u.perfil === 'admin');
+  const admin = principal || donoDoSite;
   const liberacao = meus.filter((u) => u.perfil === 'acesso')[0];
   const extras = liberacao ? liberacao.ops : [];
 

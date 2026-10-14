@@ -87,6 +87,7 @@ export default function PresenteismoPortal(props: IPortalProps): JSX.Element {
   const [usuarios, setUsuarios] = React.useState<IUsuario[]>([]);
   const [pedidos, setPedidos] = React.useState<IPedido[]>([]);
   const [gestores, setGestores] = React.useState<IGestor[]>([]);
+  const [donoSite, setDonoSite] = React.useState(false);
   const [hist, setHist] = React.useState<IHistorico[]>([]);
   const [lancMes, setLancMes] = React.useState<ILancamento[]>([]);
   const [lancDia, setLancDia] = React.useState<ILancamento[]>([]);
@@ -110,8 +111,8 @@ export default function PresenteismoPortal(props: IPortalProps): JSX.Element {
 
   // ------------------------------------------------------------ usuário efetivo
   const acesso = React.useMemo(
-    () => calcularAcesso(email, usuario.nome, props.adminEmail, usuarios, gestores),
-    [email, usuario.nome, props.adminEmail, usuarios, gestores]
+    () => calcularAcesso(email, usuario.nome, props.adminEmail, donoSite, usuarios, gestores),
+    [email, usuario.nome, props.adminEmail, donoSite, usuarios, gestores]
   );
   const admin = acesso.admin;
   const podeOperacao = React.useCallback((id: string): boolean => !acesso.ops || acesso.ops.indexOf(id) >= 0, [acesso.ops]);
@@ -149,7 +150,8 @@ export default function PresenteismoPortal(props: IPortalProps): JSX.Element {
       const id = ++reqRef.current;
       if (!silencioso) setAtualizando(true);
       try {
-        const [us, ped, ops, ges] = await Promise.all([
+        const [dono, us, ped, ops, ges] = await Promise.all([
+          servicos.acessos.donoDoSite(),
           servicos.acessos.usuarios(),
           servicos.acessos.pedidos(),
           servicos.dados.ler<{ list: IOperacao[] }>('cfg/ops'),
@@ -158,7 +160,7 @@ export default function PresenteismoPortal(props: IPortalProps): JSX.Element {
         const lista = ops && ops.list && ops.list.length ? ops.list : [OPERACAO_PADRAO];
         const listaG = ges && Array.isArray(ges.list) ? ges.list : [];
         // a operação aberta precisa estar liberada (coordenador fica nas operações dele)
-        const ac = calcularAcesso(email, usuario.nome, props.adminEmail, us || [], listaG);
+        const ac = calcularAcesso(email, usuario.nome, props.adminEmail, dono, us || [], listaG);
         const liberadas = ac.ops ? lista.filter((o) => ac.ops!.indexOf(o.id) >= 0) : lista;
         const opAtual = liberadas.some((o) => o.id === op) ? op : liberadas.length ? liberadas[0].id : ac.ops && ac.ops.length ? ac.ops[0] : lista[0].id;
         const [ini, fim] = periodoDoMes(ym);
@@ -173,6 +175,7 @@ export default function PresenteismoPortal(props: IPortalProps): JSX.Element {
         if (id !== reqRef.current) return;
         setListasOk(us !== undefined);
         setUsuarios(us || []);
+        setDonoSite(dono);
         setPedidos(ped);
         setGestores(listaG);
         setOperacoes(lista);
@@ -320,13 +323,13 @@ export default function PresenteismoPortal(props: IPortalProps): JSX.Element {
     });
     return Object.keys(grupos).length;
   }, [pm, lancDia, minhaEquipe, op, ldate]);
-  // pedidos ainda em aberto; o de administrador só o administrador principal aprova
+  // pedidos de outra operação ainda em aberto (pedidos antigos sem operação são ignorados)
   const pedidosAbertos = pedidos.filter((p) => {
+    const op = pedidoOp(p.tipo);
     const ops = usuarios.filter((u) => u.email === p.email && u.perfil === 'acesso').map((u) => u.ops)[0] || [];
-    const jaAdmin = p.email === props.adminEmail || usuarios.some((u) => u.email === p.email && u.perfil === 'admin');
-    return p.tipo === 'admin' ? !jaAdmin : !jaAdmin && ops.indexOf(pedidoOp(p.tipo)) < 0;
+    return !!op && ops.indexOf(op) < 0;
   });
-  const pedidosPendentes = admin ? pedidosAbertos.filter((p) => p.tipo !== 'admin' || acesso.principal).length : 0;
+  const pedidosPendentes = admin ? pedidosAbertos.length : 0;
   const naoLidas = pedidosPendentes + pendenciasDia;
 
   const dados: IDados = {
@@ -371,7 +374,7 @@ export default function PresenteismoPortal(props: IPortalProps): JSX.Element {
 
   const foto = perfilSp && perfilSp.temFoto ? servicos.perfil.urlFoto(perfilSp.email || email, 'M') : undefined;
   const nome = nomeCurto((perfilSp && perfilSp.nome) || usuario.nome);
-  const rotuloPerfil = acesso.principal ? 'Administrador principal' : admin ? 'Administrador' : acesso.coordenador ? 'Coordenador' : 'Visitante';
+  const rotuloPerfil = admin ? 'Administrador' : acesso.coordenador ? 'Coordenador' : 'Visitante';
   const menu = MENU.filter((m) => (forcarAdmin ? m.visao === 'administracao' : permitida(m.visao)));
 
   // Em tela larga o botão recolhe o menu para uma faixa de ícones (e lembra a escolha);
@@ -435,9 +438,9 @@ export default function PresenteismoPortal(props: IPortalProps): JSX.Element {
           />
         )}
         {visaoAtual === 'relatorios' && <Relatorios d={dados} />}
-        {visaoAtual === 'acesso' && <MeuAcesso d={dados} adminPrincipal={props.adminEmail} meusPedidos={pedidos.filter((p) => p.email === email)} />}
+        {visaoAtual === 'acesso' && <MeuAcesso d={dados} meusPedidos={pedidos.filter((p) => p.email === email)} />}
         {visaoAtual === 'headcount' && <Headcount d={dados} />}
-        {visaoAtual === 'usuarios' && <Usuarios d={dados} listasOk={listasOk} adminPrincipal={props.adminEmail} />}
+        {visaoAtual === 'usuarios' && <Usuarios d={dados} listasOk={listasOk} />}
         {visaoAtual === 'administracao' && <Administracao d={dados} listasOk={listasOk} />}
       </>
     );

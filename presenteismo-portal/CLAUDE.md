@@ -24,8 +24,9 @@ Substitui planilhas Excel/VBA. Idioma da interface e dos comentários: portuguê
 - Coordenadores vêm do headcount: cada GESTOR vira coordenador no upload (documento `cfg/gestores`, um item por gestor+operação,
   com e-mail buscado no diretório pelo nome; sem e-mail, o vínculo é pelo nome de exibição). O upload substitui a base inteira.
 - Coordenador: lança só a própria equipe; vê só as operações em que é gestor + as liberadas (perfil `acesso` em PRES_Usuarios).
-- Administrador (perfil `admin` em PRES_Usuarios): mesmos acessos do principal; só o principal aprova pedidos de administrador.
-- Pedidos (PRES_Pedidos, coluna Tipo): `admin` ou `op:<id>`. O administrador principal vem da propriedade do web part.
+- Administrador = proprietário do site do SharePoint (permissão Gerenciar site, lida em web/effectiveBasePermissions)
+  ou o administrador principal da propriedade do web part. Não há pedido/aprovação de administrador no portal.
+- Pedidos (PRES_Pedidos, coluna Tipo): `op:<id>` (coordenador pedindo outra operação); qualquer administrador aprova.
 - O filtro por operação/equipe é feito na tela; a segurança real é a das permissões das listas do SharePoint.
 
 ## Dados (listas do SharePoint, criadas pela tela Administração)
