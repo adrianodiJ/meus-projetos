@@ -66,7 +66,7 @@ export const Home: React.FC<IHomeProps> = ({ d, frase, imagemBanner }) => {
     { visao: 'acompanhamento', icone: 'BulletedList', titulo: 'Acompanhamento', texto: 'Lançamentos por gestor' },
     { visao: 'relatorios', icone: 'ReportDocument', titulo: 'Relatórios', texto: 'Exportar em Excel' },
     { visao: 'headcount', icone: 'People', titulo: 'Headcount', texto: 'Atualizar cadastro' },
-    { visao: 'usuarios', icone: 'AddFriend', titulo: 'Usuários e acessos', texto: 'Coordenadores, pedidos e administradores' },
+    { visao: 'usuarios', icone: 'AddFriend', titulo: 'Usuários e acessos', texto: 'Coordenadores e pedidos de acesso' },
     { visao: 'administracao', icone: 'Settings', titulo: 'Administração', texto: 'Listas e parâmetros' }
   ];
   const permitido = (v: Visao): boolean =>
