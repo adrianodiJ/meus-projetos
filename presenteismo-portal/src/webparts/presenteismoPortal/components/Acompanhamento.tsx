@@ -1,9 +1,9 @@
 import * as React from 'react';
 import styles from './QualityPortal.module.scss';
-import { chave, dataHora, fmt, fp, ordenarPt, unicos } from '../lib/util';
+import { chave, dataHora, fmt, fp, int, ordenarPt, unicos } from '../lib/util';
 import { ROTULO_TURNO, TURNOS } from '../models';
 import type { IDados } from './tipos';
-import { Aviso, BotaoAtualizar, Pagina } from './ui';
+import { Aviso, BotaoAtualizar, Kpi, Pagina } from './ui';
 
 interface IGrupo {
   t: string;
@@ -28,13 +28,6 @@ export const Acompanhamento: React.FC<{ d: IDados; onAbrirGestor: (g: string) =>
     return (
       <Pagina titulo="Acompanhamento de gestores" acoes={acoes}>
         <Aviso titulo="Nenhum headcount carregado" texto={d.admin ? 'Importe a planilha na aba Headcount.' : 'O administrador ainda não carregou o headcount.'} />
-      </Pagina>
-    );
-  }
-  if (!d.equipe.length) {
-    return (
-      <Pagina titulo="Acompanhamento de gestores" acoes={acoes}>
-        <Aviso titulo="Nenhuma equipe vinculada" texto="O administrador precisa vincular ao seu usuário os gestores da sua equipe." />
       </Pagina>
     );
   }
@@ -71,13 +64,6 @@ export const Acompanhamento: React.FC<{ d: IDados; onAbrirGestor: (g: string) =>
   const feitos = L.filter((o) => !o.sl).length;
   const pc = L.length ? (feitos / L.length) * 100 : 0;
 
-  const kc = (titulo: string, valor: string, sub: string, cor?: string): JSX.Element => (
-    <div className={styles.indicador}>
-      <span>{titulo}</span>
-      <b style={cor ? { color: cor } : undefined}>{valor}</b>
-      <small>{sub}</small>
-    </div>
-  );
 
   return (
     <Pagina titulo="Acompanhamento de gestores" subtitulo="Quem já lançou a lista de presença na data escolhida" acoes={acoes}>
@@ -108,11 +94,18 @@ export const Acompanhamento: React.FC<{ d: IDados; onAbrirGestor: (g: string) =>
         </label>
       </div>
 
-      <div className={styles.grade}>
-        {kc('Total de colaboradores', String(rows.length), 'incluindo temporários')}
-        {kc('Total de ausências', String(aus), `${ij} injustificada${ij === 1 ? '' : 's'} · ${at} atestado${at === 1 ? '' : 's'} · ${aus - ij - at} outros (não contam)`)}
-        {kc('Gestores que lançaram', `${feitos} de ${L.length}`, 'equipes com lista completa no dia')}
-        {kc('Lançado', fp(pc), L.length - feitos ? `${L.length - feitos} pendente${L.length - feitos > 1 ? 's' : ''}` : 'Tudo lançado', pc === 100 ? '#1e9e3e' : '#d40511')}
+      <div className={styles.kpis}>
+        <Kpi valor={int(rows.length)} legenda="Colaboradores" icone="People" cor="#1F6FD1" detalhe="incluindo temporários" />
+        <Kpi valor={int(aus)} legenda="Ausências no dia" icone="UserRemove" cor="#D40511" detalhe={`${int(ij)} injust. · ${int(at)} atest. · ${int(aus - ij - at)} outros`} />
+        <Kpi valor={`${int(feitos)} de ${int(L.length)}`} legenda="Equipes que lançaram" icone="CheckList" cor="#1E9E3E" detalhe="lista completa no dia" />
+        <Kpi
+          valor={fp(pc)}
+          legenda="Lançado"
+          icone="Clock"
+          cor={pc === 100 ? '#1E9E3E' : '#F28C00'}
+          detalhe={L.length - feitos ? `${int(L.length - feitos)} equipe${L.length - feitos > 1 ? 's' : ''} pendente${L.length - feitos > 1 ? 's' : ''}` : 'Tudo lançado'}
+          detalheCor={pc === 100 ? '#14632b' : '#9b1c22'}
+        />
       </div>
 
       <section className={styles.cartao}>
@@ -130,7 +123,7 @@ export const Acompanhamento: React.FC<{ d: IDados; onAbrirGestor: (g: string) =>
             <i style={{ background: '#fee2e2' }} />
             Lançamento pendente
           </span>
-          <span>Clique no gestor para abrir a lista de presença dele.</span>
+          <span>{d.pm('lanc') ? 'Clique na sua equipe para abrir a lista de presença.' : 'Só o gestor de cada equipe lança a presença.'}</span>
         </div>
         <div className={styles.tabelaRolagem}>
           <table className={styles.tabelaEsq}>
@@ -163,9 +156,13 @@ export const Acompanhamento: React.FC<{ d: IDados; onAbrirGestor: (g: string) =>
                   <tr key={`${o.t}|${o.g}`} className={ok ? styles.linhaOk : styles.linhaPend}>
                     <td>{ROTULO_TURNO[o.t]}</td>
                     <td>
-                      <button type="button" className={styles.elo} onClick={() => onAbrirGestor(o.g)}>
-                        {o.g}
-                      </button>
+                      {d.completo || d.meusGestores.some((g) => chave(g) === chave(o.g)) ? (
+                        <button type="button" className={styles.elo} onClick={() => onAbrirGestor(o.g)}>
+                          {o.g}
+                        </button>
+                      ) : (
+                        o.g
+                      )}
                     </td>
                     <td className={styles.num}>{o.n}</td>
                     <td className={styles.num}>{o.pr}</td>

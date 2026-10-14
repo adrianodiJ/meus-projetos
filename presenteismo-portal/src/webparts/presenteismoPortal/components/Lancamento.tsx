@@ -1,6 +1,6 @@
 import * as React from 'react';
 import styles from './QualityPortal.module.scss';
-import { chave, dataHora, dt, ehTemp, fmt, iso, nz, ordenarPt, unicos } from '../lib/util';
+import { chave, dataHora, dt, ehTemp, fmt, int, iso, nz, ordenarPt, unicos } from '../lib/util';
 import { type IColab, type ILancamento, type ILancEntrada, MOTIVOS, ROTULO_TURNO, TURNOS } from '../models';
 import type { IDados } from './tipos';
 import { Aviso, BotaoAtualizar, Pagina } from './ui';
@@ -41,7 +41,7 @@ export const Lancamento: React.FC<IProps> = ({ d, gestorInicial, busca, onLimpar
   };
   const atual = (r: IColab): ILancEntrada => rascunho[r.u] || salvo(r) || { p: true };
 
-  const todos = React.useMemo(() => d.equipe.slice().sort((a, b) => ordenarPt(a.n || a.u, b.n || b.u)), [d.equipe]);
+  const todos = React.useMemo(() => d.minhaEquipe.slice().sort((a, b) => ordenarPt(a.n || a.u, b.n || b.u)), [d.minhaEquipe]);
   if (!d.hc.rows.length) {
     return (
       <Pagina titulo="Lançamento de presença">
@@ -52,7 +52,7 @@ export const Lancamento: React.FC<IProps> = ({ d, gestorInicial, busca, onLimpar
   if (!todos.length) {
     return (
       <Pagina titulo="Lançamento de presença">
-        <Aviso titulo="Nenhuma equipe vinculada" texto="O administrador precisa vincular ao seu usuário os gestores da sua equipe." />
+        <Aviso titulo="Nenhuma equipe nesta operação" texto="Só o gestor da equipe (coluna GESTOR do headcount) lança a presença. Se você é gestor e não aparece aqui, peça ao administrador para conferir seu e-mail em Usuários e acessos." />
       </Pagina>
     );
   }
@@ -65,6 +65,7 @@ export const Lancamento: React.FC<IProps> = ({ d, gestorInicial, busca, onLimpar
   const diaSemana = dt(d.ldate).getDay();
   const efetivos = visiveis.filter((r) => !ehTemp(r)).length;
   const pendentes = visiveis.filter((r) => !igual(atual(r), salvo(r))).length;
+  const ausentes = visiveis.filter((r) => !atual(r).p).length;
 
   const definir = (r: IColab, e: ILancEntrada): void => {
     setRascunho((x) => ({ ...x, [r.u]: e }));
@@ -128,16 +129,15 @@ export const Lancamento: React.FC<IProps> = ({ d, gestorInicial, busca, onLimpar
   return (
     <Pagina
       titulo="Lançamento de presença"
-      subtitulo={`${visiveis.length} colaboradores · ${efetivos} efetivos · ${visiveis.length - efetivos} temporários`}
+      subtitulo={`${int(visiveis.length)} colaboradores · ${int(efetivos)} efetivos · ${int(visiveis.length - efetivos)} temporários`}
       acoes={<BotaoAtualizar atualizando={d.atualizando} atualizadoEm={d.atualizadoEm} onClick={() => d.recarregar().catch(() => undefined)} />}
     >
       <section className={styles.cartao}>
-        <div className={styles.fileira} style={{ marginBottom: 12 }}>
+        <div className={`${styles.fileira} ${styles.filtrosLanc}`} style={{ marginBottom: 12 }}>
           <label className={styles.campo}>
             Data de referência
             <input type="date" value={d.ldate} max={td} onChange={(e) => e.target.value && d.setLdate(e.target.value)} />
           </label>
-          {d.ldate < td && <span className={styles.retro}>Lançamento retroativo</span>}
           <label className={styles.campo}>
             Gestor
             <select value={gestorAtivo} onChange={(e) => setFg(e.target.value)}>
@@ -158,8 +158,9 @@ export const Lancamento: React.FC<IProps> = ({ d, gestorInicial, busca, onLimpar
               ))}
             </select>
           </label>
+          {d.ldate < td && <span className={styles.retro}>Lançamento retroativo</span>}
           {busca && (
-            <span className={styles.mudo} style={{ alignSelf: 'center' }}>
+            <span className={`${styles.mudo} ${styles.fileiraNota}`}>
               Pesquisa: “{busca}”{' '}
               <button type="button" className={styles.link} onClick={onLimparBusca}>
                 limpar
@@ -175,7 +176,7 @@ export const Lancamento: React.FC<IProps> = ({ d, gestorInicial, busca, onLimpar
         {!gravavel && <p className={styles.aviso2}>Somente visualização: seu usuário não tem permissão para gravar lançamentos.</p>}
         <fieldset disabled={!gravavel} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
           <div className={styles.tabelaRolagem}>
-            <table className={styles.tabelaEsq}>
+            <table className={`${styles.tabelaEsq} ${styles.tabelaLanc}`}>
               <thead>
                 <tr>
                   <th>Colaborador</th>
@@ -202,8 +203,8 @@ export const Lancamento: React.FC<IProps> = ({ d, gestorInicial, busca, onLimpar
                   const doc = docs[idDoc(r.g)];
                   const dica = lancado && doc ? `Lançado por ${d.nomeDe(doc.por)} em ${dataHora(doc.em)}` : '';
                   return (
-                    <tr key={r.u}>
-                      <td>
+                    <tr key={r.u} className={c.p ? '' : styles.linhaAusente}>
+                      <td className={styles.cNome}>
                         <b>{r.n || r.u}</b>
                         {ehTemp(r) && <span className={styles.seloTemp}>TEMP</span>}
                         <div className={styles.mudo}>
@@ -211,9 +212,9 @@ export const Lancamento: React.FC<IProps> = ({ d, gestorInicial, busca, onLimpar
                           {d.completo || gestores.length > 1 ? ` · ${r.g}` : ''}
                         </div>
                       </td>
-                      <td>{r.c || '—'}</td>
-                      <td>{ROTULO_TURNO[r.t]}</td>
-                      <td>
+                      <td className={styles.cFuncao}>{r.c || '—'}</td>
+                      <td className={styles.cTurno}>{ROTULO_TURNO[r.t]}</td>
+                      <td className={styles.cPresenca}>
                         <div className={styles.alterna} role="group" aria-label={`Presença de ${r.n || r.u}`}>
                           <button type="button" className={c.p ? styles.alternaSim : ''} onClick={() => setP(r, true)}>
                             Sim
@@ -223,11 +224,11 @@ export const Lancamento: React.FC<IProps> = ({ d, gestorInicial, busca, onLimpar
                           </button>
                         </div>
                       </td>
-                      <td>
+                      <td className={`${styles.cMotivo} ${c.p ? styles.cVazio : ''}`}>
                         {c.p ? (
                           <span className={styles.mudo}>—</span>
                         ) : (
-                          <select className={erros[r.u] ? styles.campoErro : ''} value={c.m || ''} aria-label="Motivo" onChange={(e) => setM(r, e.target.value)} style={{ padding: '6px 8px', border: '1px solid #c9ced6', borderRadius: 6 }}>
+                          <select className={`${styles.controleTabela} ${erros[r.u] ? styles.campoErro : ''}`} value={c.m || ''} aria-label="Motivo" onChange={(e) => setM(r, e.target.value)}>
                             <option value="">Selecione o motivo</option>
                             {MOTIVOS.map((m) => (
                               <option key={m}>{m}</option>
@@ -235,18 +236,18 @@ export const Lancamento: React.FC<IProps> = ({ d, gestorInicial, busca, onLimpar
                           </select>
                         )}
                       </td>
-                      <td>
+                      <td className={styles.cStatus}>
                         <span className={lancado ? styles.seloOk : styles.selo} title={dica}>
                           {lancado ? 'LANÇADO' : 'PENDENTE'}
                         </span>
                       </td>
-                      <td>
+                      <td className={styles.cObs}>
                         <input
                           type="text"
+                          className={styles.controleTabela}
                           value={c.o || ''}
                           placeholder="Observação"
                           aria-label="Observação"
-                          style={{ minWidth: 180, padding: '6px 8px', border: '1px solid #c9ced6', borderRadius: 6 }}
                           onChange={(e) => setO(r, e.target.value)}
                         />
                       </td>
@@ -260,11 +261,19 @@ export const Lancamento: React.FC<IProps> = ({ d, gestorInicial, busca, onLimpar
       </section>
 
       <div className={styles.barraFixa}>
-        <span className={styles.mudo}>{pendentes ? `${pendentes} linha${pendentes > 1 ? 's' : ''} pendente${pendentes > 1 ? 's' : ''}` : 'Tudo lançado'}</span>
-        <div>
+        <div className={styles.barraResumo}>
+          <span className={styles.resumoPres}>
+            <b>{int(visiveis.length - ausentes)}</b> presentes
+          </span>
+          <span className={styles.resumoAus}>
+            <b>{int(ausentes)}</b> ausentes
+          </span>
+          <span className={pendentes ? styles.resumoPend : styles.resumoOk}>{pendentes ? `${int(pendentes)} a lançar` : 'Tudo lançado'}</span>
+        </div>
+        <div className={styles.barraAcoes}>
           <button
             type="button"
-            className={styles.botao}
+            className={`${styles.botao} ${styles.soDesktop}`}
             onClick={() => {
               setFg('');
               setFt('');
@@ -285,7 +294,7 @@ export const Lancamento: React.FC<IProps> = ({ d, gestorInicial, busca, onLimpar
             Desfazer alterações
           </button>
           {gravavel && (
-            <button type="button" className={styles.botaoVermelho} disabled={gravando} onClick={() => lancar().catch(() => undefined)}>
+            <button type="button" className={`${styles.botaoVermelho} ${styles.botaoLancar}`} disabled={gravando} onClick={() => lancar().catch(() => undefined)}>
               {gravando ? 'Lançando…' : 'Lançar presença'}
             </button>
           )}

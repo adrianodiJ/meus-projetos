@@ -2,7 +2,6 @@ declare interface IPresenteismoPortalWebPartStrings {
   PropertyPaneDescription: string;
   ExibicaoGroupName: string;
   TituloLabel: string;
-  SubtituloLabel: string;
   FraseLabel: string;
   ImagemBannerLabel: string;
   ImagemBannerDescription: string;

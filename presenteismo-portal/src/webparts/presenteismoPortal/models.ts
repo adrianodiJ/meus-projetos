@@ -1,13 +1,17 @@
 // Modelos e constantes do portal de Presenteísmo.
 
 export type Turno = 'PRIMEIRO' | 'SEGUNDO' | 'ADM';
-export type Perfil = 'coordenador' | 'supervisor' | 'gerente' | 'admin';
-export type StatusUsuario = 'aprovado' | 'pendente' | 'bloqueado';
+/**
+ * Perfis gravados na lista PRES_Usuarios:
+ * - admin: mesmos acessos do administrador principal (aprovado só por ele);
+ * - acesso: coordenador com operações extras liberadas por um administrador.
+ * Coordenadores não ficam nessa lista: vêm do headcount (coluna GESTOR), a cada upload.
+ */
+export type Perfil = 'admin' | 'acesso';
 
 export const TURNOS: Turno[] = ['PRIMEIRO', 'SEGUNDO', 'ADM'];
 export const ROTULO_TURNO: Record<string, string> = { PRIMEIRO: '1º turno', SEGUNDO: '2º turno', ADM: 'ADM', GERAL: 'Geral' };
-export const PERFIS: Perfil[] = ['coordenador', 'supervisor', 'gerente', 'admin'];
-export const STATUS_USUARIO: StatusUsuario[] = ['aprovado', 'pendente', 'bloqueado'];
+export const PERFIS: Perfil[] = ['admin', 'acesso'];
 
 /** Motivos de ausência que entram no cálculo do presenteísmo. */
 export const MOTIVOS_FALTA: string[] = ['Falta injustificada', 'Atestado'];
@@ -22,16 +26,6 @@ export const MOTIVOS: string[] = [
   'Desligado',
   'Afastamento',
   'Outros'
-];
-
-/** Permissões de tela/ação por usuário (padrão: liberado, exceto se marcado como false). */
-export const PERMISSOES: { chave: string; texto: string }[] = [
-  { chave: 'painel', texto: 'Ver Painel Presenteísmo' },
-  { chave: 'acomp', texto: 'Ver acompanhamento de gestores' },
-  { chave: 'top', texto: 'Ver Top 10 ofensores' },
-  { chave: 'exp', texto: 'Exportar relatórios em Excel' },
-  { chave: 'lanc', texto: 'Ver aba Lançamento' },
-  { chave: 'grav', texto: 'Gravar lançamentos' }
 ];
 
 export const LISTA_DADOS = 'PRES_Dados';
@@ -98,23 +92,45 @@ export interface IAbs {
 export const ABS_PADRAO: IAbs = { contract: 'DHL', setor: {}, funcao: {}, gest: {} };
 
 export interface IUsuario {
-  /** id do item na lista (0 = usuário fixo do portal, sem item) */
+  /** id do item na lista */
   id: number;
   email: string;
   nome: string;
   perfil: Perfil;
-  status: StatusUsuario;
+  /** perfil "acesso": operações liberadas além das do headcount */
   ops: string[];
-  gestores: string[];
-  perm: Record<string, boolean>;
 }
+
+/** Coordenador criado pelo headcount: um por gestor e operação (documento cfg/gestores). */
+export interface IGestor {
+  op: string;
+  /** nome do gestor como está na planilha */
+  g: string;
+  /** e-mail vinculado (buscado no diretório no upload ou informado pelo administrador) */
+  email: string;
+  /** nome de exibição no diretório */
+  nome?: string;
+  /** colaboradores na equipe */
+  n: number;
+}
+
+export interface IGestores {
+  list: IGestor[];
+  em?: string;
+}
+
+/** "admin" = virar administrador (só o administrador principal aprova); "op:<id>" = ver outra operação. */
+export type TipoPedido = 'admin' | string;
 
 export interface IPedido {
   id: number;
   email: string;
   nome: string;
   em: string;
+  tipo: TipoPedido;
 }
+
+export const pedidoOp = (tipo: string): string => (tipo.indexOf('op:') === 0 ? tipo.slice(3) : '');
 
 export interface ILancEntrada {
   p: boolean;

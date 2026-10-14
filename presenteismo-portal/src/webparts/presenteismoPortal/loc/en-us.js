@@ -3,7 +3,6 @@ define([], function() {
     "PropertyPaneDescription": "Presenteismo Portal settings",
     "ExibicaoGroupName": "Display",
     "TituloLabel": "Title (top bar)",
-    "SubtituloLabel": "Subtitle (top bar)",
     "FraseLabel": "Banner quote",
     "ImagemBannerLabel": "Banner image (URL)",
     "ImagemBannerDescription": "Optional. Empty = default illustration. Use an image from a SharePoint library.",

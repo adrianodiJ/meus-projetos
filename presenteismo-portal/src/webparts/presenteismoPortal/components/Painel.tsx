@@ -1,11 +1,11 @@
 import * as React from 'react';
 import styles from './QualityPortal.module.scss';
 import { calcular, periodoDoMes, pct, resumoPainel, somar } from '../lib/calculo';
-import { fmt, fp, num, ordenarPt, unicos } from '../lib/util';
+import { fmt, fp, int, num, ordenarPt, unicos } from '../lib/util';
 import { ROTULO_TURNO, TURNOS } from '../models';
 import { Anel, COR_OK, COR_RUIM, GraficoSemanal, Trilha } from './Charts';
 import type { IDados } from './tipos';
-import { Aviso, BotaoAtualizar, Cartao, Pagina } from './ui';
+import { Aviso, BotaoAtualizar, Cartao, Kpi, Pagina } from './ui';
 
 export const Painel: React.FC<{ d: IDados }> = ({ d }) => {
   const meta = d.params.meta;
@@ -17,8 +17,8 @@ export const Painel: React.FC<{ d: IDados }> = ({ d }) => {
         Mês
         <input type="month" value={d.ym} onChange={(e) => e.target.value && d.setYm(e.target.value)} />
       </label>
-      <span className={styles.mudo} style={{ alignSelf: 'center' }}>
-        {fmt(ini)} a {fmt(fim)} · meta {meta}% · somente efetivos (área TEMP fora)
+      <span className={styles.fileiraNota}>
+        {fmt(ini)} a {fmt(fim)} · meta {fp(meta)} · somente efetivos
       </span>
       <BotaoAtualizar atualizando={d.atualizando} atualizadoEm={d.atualizadoEm} onClick={() => d.recarregar().catch(() => undefined)} />
       {d.pm('exp') && (
@@ -92,25 +92,13 @@ export const Painel: React.FC<{ d: IDados }> = ({ d }) => {
           <div>
             <span>Presenteísmo do mês</span>
             <b style={{ color: cor(v) }}>{v === null ? 'Sem horas' : ok ? 'Dentro da meta' : `${num(meta - v)} p.p. abaixo`}</b>
-            <small>Meta {meta}%</small>
+            <small>Meta {fp(meta)}</small>
           </div>
         </div>
-        <div className={styles.indicador}>
-          <span>Horas previstas</span>
-          <b>{num(r.total.p)}</b>
-        </div>
-        <div className={styles.indicador}>
-          <span>Horas de falta</span>
-          <b>{num(r.total.f)}</b>
-        </div>
-        <div className={styles.indicador}>
-          <span>Faltas no mês</span>
-          <b>{r.faltasMes.length}</b>
-        </div>
-        <div className={styles.indicador}>
-          <span>Efetivos</span>
-          <b>{r.rows.length}</b>
-        </div>
+        <Kpi valor={num(r.total.p)} legenda="Horas previstas" icone="Clock" cor="#1F6FD1" detalhe="dias com expediente" />
+        <Kpi valor={num(r.total.f)} legenda="Horas de falta" icone="Warning" cor="#D40511" detalhe={r.total.p ? `${num((r.total.f / r.total.p) * 100)}% das horas previstas` : undefined} />
+        <Kpi valor={int(r.faltasMes.length)} legenda="Faltas no mês" icone="UserRemove" cor="#8C0A12" detalhe="injustificadas + atestados" />
+        <Kpi valor={int(r.rows.length)} legenda="Efetivos" icone="People" cor="#4B5563" detalhe="temporários fora do cálculo" />
       </div>
 
       <div className={styles.grade2}>
@@ -139,7 +127,7 @@ export const Painel: React.FC<{ d: IDados }> = ({ d }) => {
             <div key={x.g} className={styles.linhaGestor}>
               <div>
                 <b>{x.g}</b>
-                <div className={styles.mudo}>{x.n} efetivos</div>
+                <div className={styles.mudo}>{int(x.n)} efetivos</div>
               </div>
               <Trilha valor={x.v} meta={meta} altura={6} />
               <div className={styles.valor}>{fp(x.v)}</div>

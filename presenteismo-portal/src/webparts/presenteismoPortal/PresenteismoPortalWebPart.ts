@@ -17,7 +17,6 @@ import { SpClient } from './services/SpClient';
 
 export interface IPresenteismoPortalWebPartProps {
   titulo: string;
-  subtitulo: string;
   frase: string;
   imagemBanner: string;
   adminEmail: string;
@@ -58,7 +57,6 @@ export default class PresenteismoPortalWebPart extends BaseClientSideWebPart<IPr
     const user = this.context.pageContext.user;
     const element: React.ReactElement<IPortalProps> = React.createElement(PresenteismoPortal, {
       titulo: this.properties.titulo || 'QRA LATAM : Brasil',
-      subtitulo: this.properties.subtitulo || 'Presenteísmo Digital Portal',
       frase: this.properties.frase || 'Presença hoje. Resultado sempre.',
       imagemBanner: (this.properties.imagemBanner || '').trim(),
       adminEmail: (this.properties.adminEmail || ADMIN_PADRAO).trim().toLowerCase(),
@@ -92,7 +90,6 @@ export default class PresenteismoPortalWebPart extends BaseClientSideWebPart<IPr
               groupName: strings.ExibicaoGroupName,
               groupFields: [
                 PropertyPaneTextField('titulo', { label: strings.TituloLabel }),
-                PropertyPaneTextField('subtitulo', { label: strings.SubtituloLabel }),
                 PropertyPaneTextField('frase', { label: strings.FraseLabel }),
                 PropertyPaneTextField('imagemBanner', { label: strings.ImagemBannerLabel, description: strings.ImagemBannerDescription })
               ]

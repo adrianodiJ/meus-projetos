@@ -6,6 +6,8 @@ import {
   ABS_PADRAO,
   type IAbs,
   type IColab,
+  type IGestor,
+  type IGestores,
   type IHeadcount,
   type IHistorico,
   type ILancamento,
@@ -14,19 +16,24 @@ import {
   type IPedido,
   type IPerfilSp,
   type IUsuario,
+  pedidoOp,
   nomeCurto,
   OPERACAO_PADRAO,
   PARAMETROS_PADRAO
 } from '../models';
+import { calcularAcesso } from '../lib/acesso';
 import { periodoDoMes } from '../lib/calculo';
-import { chave, iso } from '../lib/util';
+import { chave, int, iso } from '../lib/util';
 import { Acompanhamento } from './Acompanhamento';
 import { Administracao } from './Administracao';
 import { Headcount } from './Headcount';
 import { Home } from './Home';
 import { Lancamento } from './Lancamento';
+import { MeuAcesso } from './MeuAcesso';
 import { Painel } from './Painel';
 import { Relatorios } from './Relatorios';
+import { Usuarios } from './Usuarios';
+import { DOC_GESTORES } from '../services/Coordenadores';
 import { type IDados, type IPortalProps, MENU, type Visao } from './tipos';
 import { Aviso, Avatar } from './ui';
 
@@ -36,14 +43,27 @@ initializeIcons(undefined, { disableWarnings: true });
 // Microsoft 365/SharePoint e o cabeçalho do site; a página por baixo não rola.
 const CSS_TELA_CHEIA = 'html, body { overflow: hidden !important; }';
 const CHAVE_OP = 'presenteismo-operacao';
+const CHAVE_MENU = 'presenteismo-menu-recolhido';
+/** Abaixo desta largura o menu lateral vira gaveta sobreposta (igual ao CSS). */
+const LARGURA_GAVETA = 900;
 
-function lerOp(): string {
+function lerLocal(k: string): string {
   try {
-    return window.localStorage.getItem(CHAVE_OP) || '';
+    return window.localStorage.getItem(k) || '';
   } catch {
     return '';
   }
 }
+
+function gravarLocal(k: string, v: string): void {
+  try {
+    window.localStorage.setItem(k, v);
+  } catch {
+    /* navegação privada */
+  }
+}
+
+const lerOp = (): string => lerLocal(CHAVE_OP);
 
 function mensagem(e: unknown): string {
   const x = e as { message?: string };
@@ -53,7 +73,6 @@ function mensagem(e: unknown): string {
 export default function PresenteismoPortal(props: IPortalProps): JSX.Element {
   const { servicos, usuario } = props;
   const email = usuario.email;
-  const ehAdminPrincipal = !!email && email === props.adminEmail;
 
   const hoje = new Date();
   const [fase, setFase] = React.useState<'carregando' | 'pronto' | 'erro'>('carregando');
@@ -67,6 +86,7 @@ export default function PresenteismoPortal(props: IPortalProps): JSX.Element {
   const [absExiste, setAbsExiste] = React.useState(false);
   const [usuarios, setUsuarios] = React.useState<IUsuario[]>([]);
   const [pedidos, setPedidos] = React.useState<IPedido[]>([]);
+  const [gestores, setGestores] = React.useState<IGestor[]>([]);
   const [hist, setHist] = React.useState<IHistorico[]>([]);
   const [lancMes, setLancMes] = React.useState<ILancamento[]>([]);
   const [lancDia, setLancDia] = React.useState<ILancamento[]>([]);
@@ -80,6 +100,7 @@ export default function PresenteismoPortal(props: IPortalProps): JSX.Element {
   const [buscaAplicada, setBuscaAplicada] = React.useState('');
   const [gestorPre, setGestorPre] = React.useState('');
   const [menuLateral, setMenuLateral] = React.useState(false);
+  const [recolhido, setRecolhido] = React.useState(lerLocal(CHAVE_MENU) === '1');
   const [notifAberto, setNotifAberto] = React.useState(false);
   const [menuUsuario, setMenuUsuario] = React.useState(false);
   const [perfilSp, setPerfilSp] = React.useState<IPerfilSp | undefined>(undefined);
@@ -88,19 +109,28 @@ export default function PresenteismoPortal(props: IPortalProps): JSX.Element {
   const reqRef = React.useRef(0);
 
   // ------------------------------------------------------------ usuário efetivo
-  const cadastro = React.useMemo(() => usuarios.filter((u) => u.email === email)[0], [usuarios, email]);
-  const eu: IUsuario = React.useMemo(() => {
-    if (ehAdminPrincipal) {
-      return { id: cadastro ? cadastro.id : 0, email, nome: usuario.nome, perfil: 'admin', status: 'aprovado', ops: [], gestores: [], perm: {} };
-    }
-    return cadastro || { id: 0, email, nome: usuario.nome, perfil: 'coordenador', status: 'pendente', ops: [], gestores: [], perm: {} };
-  }, [ehAdminPrincipal, cadastro, email, usuario.nome]);
-  const aprovado = eu.status === 'aprovado';
-  const admin = aprovado && eu.perfil === 'admin';
-  const completo = admin || (aprovado && eu.perfil === 'gerente');
-  const pm = React.useCallback((k: string): boolean => admin || eu.perm[k] !== false, [admin, eu.perm]);
-  const podeOperacao = React.useCallback((id: string): boolean => admin || eu.ops.indexOf(id) >= 0, [admin, eu.ops]);
-  const equipe: IColab[] = React.useMemo(() => hc.rows.filter((r) => completo || eu.gestores.indexOf(r.g) >= 0), [hc.rows, completo, eu.gestores]);
+  const acesso = React.useMemo(
+    () => calcularAcesso(email, usuario.nome, props.adminEmail, usuarios, gestores),
+    [email, usuario.nome, props.adminEmail, usuarios, gestores]
+  );
+  const admin = acesso.admin;
+  const podeOperacao = React.useCallback((id: string): boolean => !acesso.ops || acesso.ops.indexOf(id) >= 0, [acesso.ops]);
+  const meusGestores = React.useMemo(() => acesso.vinculos.filter((v) => v.op === op).map((v) => v.g), [acesso.vinculos, op]);
+  const pm = React.useCallback(
+    (k: string): boolean => {
+      if (k === 'exp') return admin || acesso.coordenador;
+      if (k === 'lanc' || k === 'grav') return admin || meusGestores.length > 0;
+      return true;
+    },
+    [admin, acesso.coordenador, meusGestores.length]
+  );
+  const equipe: IColab[] = hc.rows;
+  const minhaEquipe: IColab[] = React.useMemo(() => {
+    if (admin) return hc.rows;
+    const meus: Record<string, boolean> = {};
+    meusGestores.forEach((g) => (meus[chave(g)] = true));
+    return hc.rows.filter((r) => meus[chave(r.g)]);
+  }, [admin, hc.rows, meusGestores]);
 
   const nomeDe = React.useCallback(
     (e: string): string => {
@@ -119,9 +149,18 @@ export default function PresenteismoPortal(props: IPortalProps): JSX.Element {
       const id = ++reqRef.current;
       if (!silencioso) setAtualizando(true);
       try {
-        const [us, ped, ops] = await Promise.all([servicos.acessos.usuarios(), servicos.acessos.pedidos(), servicos.dados.ler<{ list: IOperacao[] }>('cfg/ops')]);
+        const [us, ped, ops, ges] = await Promise.all([
+          servicos.acessos.usuarios(),
+          servicos.acessos.pedidos(),
+          servicos.dados.ler<{ list: IOperacao[] }>('cfg/ops'),
+          servicos.dados.ler<IGestores>(DOC_GESTORES)
+        ]);
         const lista = ops && ops.list && ops.list.length ? ops.list : [OPERACAO_PADRAO];
-        const opAtual = lista.some((o) => o.id === op) ? op : lista[0].id;
+        const listaG = ges && Array.isArray(ges.list) ? ges.list : [];
+        // a operação aberta precisa estar liberada (coordenador fica nas operações dele)
+        const ac = calcularAcesso(email, usuario.nome, props.adminEmail, us || [], listaG);
+        const liberadas = ac.ops ? lista.filter((o) => ac.ops!.indexOf(o.id) >= 0) : lista;
+        const opAtual = liberadas.some((o) => o.id === op) ? op : liberadas.length ? liberadas[0].id : ac.ops && ac.ops.length ? ac.ops[0] : lista[0].id;
         const [ini, fim] = periodoDoMes(ym);
         const [hcD, parD, absD, mes, dia] = await Promise.all([
           servicos.dados.ler<IHeadcount>(`hc/${opAtual}`),
@@ -130,11 +169,12 @@ export default function PresenteismoPortal(props: IPortalProps): JSX.Element {
           servicos.lancamentos.periodo(opAtual, ini, fim),
           servicos.lancamentos.periodo(opAtual, ldate, ldate)
         ]);
-        const h = admin ? await servicos.historico.recentes(15) : [];
+        const h = ac.admin ? await servicos.historico.recentes(15) : [];
         if (id !== reqRef.current) return;
         setListasOk(us !== undefined);
         setUsuarios(us || []);
         setPedidos(ped);
+        setGestores(listaG);
         setOperacoes(lista);
         if (opAtual !== op) setOpEstado(opAtual);
         setHc(hcD && Array.isArray(hcD.rows) ? hcD : { rows: [] });
@@ -157,7 +197,7 @@ export default function PresenteismoPortal(props: IPortalProps): JSX.Element {
         if (id === reqRef.current) setAtualizando(false);
       }
     },
-    [servicos, op, ym, ldate, admin]
+    [servicos, op, ym, ldate, email, usuario.nome, props.adminEmail]
   );
 
   React.useEffect(() => {
@@ -194,11 +234,11 @@ export default function PresenteismoPortal(props: IPortalProps): JSX.Element {
 
   // a operação atual precisa estar liberada para o usuário
   React.useEffect(() => {
-    if (fase !== 'pronto' || !aprovado || podeOperacao(op)) return;
+    if (fase !== 'pronto' || podeOperacao(op)) return;
     const livre = operacoes.filter((o) => podeOperacao(o.id))[0];
     if (livre) trocarOp(livre.id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fase, aprovado, op, operacoes, podeOperacao]);
+  }, [fase, op, operacoes, podeOperacao]);
 
   const telaCheia = !props.modoEdicao && !admin;
   React.useEffect(() => {
@@ -240,11 +280,7 @@ export default function PresenteismoPortal(props: IPortalProps): JSX.Element {
   );
 
   function trocarOp(id: string): void {
-    try {
-      window.localStorage.setItem(CHAVE_OP, id);
-    } catch {
-      /* navegação privada */
-    }
+    gravarLocal(CHAVE_OP, id);
     setOpEstado(id);
     setGestorPre('');
     setBuscaAplicada('');
@@ -252,11 +288,9 @@ export default function PresenteismoPortal(props: IPortalProps): JSX.Element {
 
   const permitida = React.useCallback(
     (v: Visao): boolean => {
-      if (v === 'painel') return pm('painel');
       if (v === 'lancamento') return pm('lanc');
-      if (v === 'acompanhamento') return pm('acomp');
       if (v === 'relatorios') return pm('exp');
-      if (v === 'headcount' || v === 'administracao') return admin;
+      if (v === 'headcount' || v === 'usuarios' || v === 'administracao') return admin;
       return true;
     },
     [pm, admin]
@@ -276,17 +310,23 @@ export default function PresenteismoPortal(props: IPortalProps): JSX.Element {
 
   // ------------------------------------------------------------ notificações
   const pendenciasDia = React.useMemo(() => {
-    if (!aprovado || !pm('lanc')) return 0;
+    if (!pm('lanc')) return 0;
     const grupos: Record<string, boolean> = {};
     const doDia: Record<string, ILancamento> = {};
     lancDia.forEach((l) => (doDia[l.id] = l));
-    equipe.forEach((r) => {
+    minhaEquipe.forEach((r) => {
       const l = doDia[`${op}_${ldate}_${chave(r.g)}`];
       if (!l || !l.e[r.u]) grupos[`${r.t}|${r.g}`] = true;
     });
     return Object.keys(grupos).length;
-  }, [aprovado, pm, lancDia, equipe, op, ldate]);
-  const pedidosPendentes = admin ? pedidos.filter((p) => !usuarios.some((u) => u.email === p.email)).length : 0;
+  }, [pm, lancDia, minhaEquipe, op, ldate]);
+  // pedidos ainda em aberto; o de administrador só o administrador principal aprova
+  const pedidosAbertos = pedidos.filter((p) => {
+    const ops = usuarios.filter((u) => u.email === p.email && u.perfil === 'acesso').map((u) => u.ops)[0] || [];
+    const jaAdmin = p.email === props.adminEmail || usuarios.some((u) => u.email === p.email && u.perfil === 'admin');
+    return p.tipo === 'admin' ? !jaAdmin : !jaAdmin && ops.indexOf(pedidoOp(p.tipo)) < 0;
+  });
+  const pedidosPendentes = admin ? pedidosAbertos.filter((p) => p.tipo !== 'admin' || acesso.principal).length : 0;
   const naoLidas = pedidosPendentes + pendenciasDia;
 
   const dados: IDados = {
@@ -297,7 +337,8 @@ export default function PresenteismoPortal(props: IPortalProps): JSX.Element {
     abs,
     absExiste,
     usuarios,
-    pedidos,
+    pedidos: pedidosAbertos,
+    gestores,
     hist,
     lancMes,
     lancDia,
@@ -305,11 +346,13 @@ export default function PresenteismoPortal(props: IPortalProps): JSX.Element {
     ldate,
     email,
     nome: usuario.nome,
-    eu,
+    acesso,
     admin,
-    completo,
+    completo: admin,
     pm,
     equipe,
+    minhaEquipe,
+    meusGestores,
     nomeDe,
     opNome,
     podeOperacao,
@@ -328,8 +371,23 @@ export default function PresenteismoPortal(props: IPortalProps): JSX.Element {
 
   const foto = perfilSp && perfilSp.temFoto ? servicos.perfil.urlFoto(perfilSp.email || email, 'M') : undefined;
   const nome = nomeCurto((perfilSp && perfilSp.nome) || usuario.nome);
-  const rotuloPerfil = ehAdminPrincipal ? 'Administrador' : aprovado ? eu.perfil.charAt(0).toUpperCase() + eu.perfil.slice(1) : 'Sem acesso';
+  const rotuloPerfil = acesso.principal ? 'Administrador principal' : admin ? 'Administrador' : acesso.coordenador ? 'Coordenador' : 'Visitante';
   const menu = MENU.filter((m) => (forcarAdmin ? m.visao === 'administracao' : permitida(m.visao)));
+
+  // Em tela larga o botão recolhe o menu para uma faixa de ícones (e lembra a escolha);
+  // em tela estreita ele abre e fecha a gaveta sobreposta.
+  function alternarMenu(): void {
+    if (window.innerWidth <= LARGURA_GAVETA) {
+      setMenuLateral((m) => !m);
+      return;
+    }
+    setRecolhido((r) => {
+      gravarLocal(CHAVE_MENU, r ? '0' : '1');
+      return !r;
+    });
+  }
+
+  const opsVisiveis = operacoes.filter((o) => podeOperacao(o.id));
 
   function pesquisar(): void {
     setBuscaAplicada(busca.trim());
@@ -360,8 +418,6 @@ export default function PresenteismoPortal(props: IPortalProps): JSX.Element {
         <Aviso titulo="Portal ainda não configurado" texto="As listas de dados do Presenteísmo ainda não foram criadas neste site. Peça ao administrador para abrir o portal e criar as listas em Administração." />
       </div>
     );
-  } else if (!aprovado && !admin) {
-    conteudo = <SolicitarAcesso d={dados} pedido={pedidos.filter((p) => p.email === email)[0]} bloqueado={eu.status === 'bloqueado'} />;
   } else {
     conteudo = (
       <>
@@ -379,7 +435,9 @@ export default function PresenteismoPortal(props: IPortalProps): JSX.Element {
           />
         )}
         {visaoAtual === 'relatorios' && <Relatorios d={dados} />}
+        {visaoAtual === 'acesso' && <MeuAcesso d={dados} adminPrincipal={props.adminEmail} meusPedidos={pedidos.filter((p) => p.email === email)} />}
         {visaoAtual === 'headcount' && <Headcount d={dados} />}
+        {visaoAtual === 'usuarios' && <Usuarios d={dados} listasOk={listasOk} adminPrincipal={props.adminEmail} />}
         {visaoAtual === 'administracao' && <Administracao d={dados} listasOk={listasOk} />}
       </>
     );
@@ -388,27 +446,47 @@ export default function PresenteismoPortal(props: IPortalProps): JSX.Element {
   return (
     <div className={`${styles.app} ${telaCheia ? styles.telaCheia : ''}`}>
       <header className={styles.topo}>
-        <button type="button" className={styles.botaoMenu} aria-label="Abrir menu" onClick={() => setMenuLateral((m) => !m)} style={{ border: 0, background: 'transparent', fontSize: 20, cursor: 'pointer' }}>
-          <Icon iconName="GlobalNavButton" />
+        <button
+          type="button"
+          className={styles.botaoMenu}
+          aria-label={recolhido ? 'Expandir menu' : 'Recolher menu'}
+          aria-expanded={!recolhido}
+          title={recolhido ? 'Expandir menu' : 'Recolher menu'}
+          onClick={alternarMenu}
+        >
+          <Icon iconName={recolhido ? 'DoubleChevronRight' : 'DoubleChevronLeft'} />
         </button>
         <button type="button" className={styles.marca} onClick={() => irPara('home')} title="Início">
           <img src={LOGO_DHL} alt="DHL" />
           <b>{props.titulo}</b>
-          <span className={styles.marcaSub}>{props.subtitulo}</span>
         </button>
-        {fase === 'pronto' && operacoes.length > 0 && (
-          <label className={styles.operacao}>
-            Operação
-            <select value={op} onChange={(e) => trocarOp(e.target.value)} aria-label="Operação">
-              {operacoes
-                .filter((o) => podeOperacao(o.id) || !aprovado)
-                .map((o) => (
-                  <option key={o.id} value={o.id}>
-                    {o.nome}
-                  </option>
-                ))}
-            </select>
-          </label>
+        {fase === 'pronto' && opsVisiveis.length > 0 && (
+          <div className={styles.operacao} title="Operação exibida no portal: headcount, lançamentos e indicadores são desta operação">
+            <span className={styles.operacaoIcone}>
+              <Icon iconName="CityNext" />
+            </span>
+            <span className={styles.operacaoTexto}>
+              <small>Operação</small>
+              {opsVisiveis.length > 1 ? (
+                <span className={styles.operacaoSelect}>
+                  <select value={op} onChange={(e) => trocarOp(e.target.value)} aria-label="Operação">
+                    {opsVisiveis.map((o) => (
+                      <option key={o.id} value={o.id}>
+                        {o.nome}
+                      </option>
+                    ))}
+                  </select>
+                  <Icon iconName="ChevronDown" />
+                </span>
+              ) : (
+                <b>{opNome(op)}</b>
+              )}
+            </span>
+            <span className={styles.operacaoInfo}>
+              <b>{int(equipe.length)}</b>
+              <small>colaboradores</small>
+            </span>
+          </div>
         )}
 
         <div className={styles.busca}>
@@ -428,7 +506,7 @@ export default function PresenteismoPortal(props: IPortalProps): JSX.Element {
             <Icon iconName="Ringer" />
             {naoLidas > 0 && <span className={styles.badge}>{naoLidas > 9 ? '9+' : naoLidas}</span>}
           </button>
-          <button type="button" className={styles.iconeTopo} onClick={() => carregar().catch(() => undefined)} aria-label="Atualizar" title="Atualizar os dados">
+          <button type="button" className={`${styles.iconeTopo} ${styles.botaoSoDesktop}`} onClick={() => carregar().catch(() => undefined)} aria-label="Atualizar" title="Atualizar os dados">
             <Icon iconName="Refresh" className={atualizando ? styles.girando : ''} />
           </button>
           <button ref={botaoUsuario} type="button" className={styles.usuario} onClick={() => setMenuUsuario(true)} aria-haspopup="menu">
@@ -447,6 +525,7 @@ export default function PresenteismoPortal(props: IPortalProps): JSX.Element {
               items={[
                 { key: 'quem', text: `${usuario.nome} · ${rotuloPerfil}`, disabled: true },
                 { key: 'email', text: email, disabled: true },
+                { key: 'acesso', text: 'Meu acesso', iconProps: { iconName: 'Contact' }, onClick: () => irPara('acesso') },
                 { key: 'atualizar', text: 'Atualizar dados', iconProps: { iconName: 'Refresh' }, onClick: () => {
                     carregar().catch(() => undefined);
                   }
@@ -458,14 +537,22 @@ export default function PresenteismoPortal(props: IPortalProps): JSX.Element {
       </header>
 
       <div className={styles.corpo}>
-        <nav className={`${styles.lateral} ${menuLateral ? styles.lateralAberta : ''}`} aria-label="Navegação do portal">
+        {menuLateral && <div className={styles.lateralFundo} onClick={() => setMenuLateral(false)} aria-hidden="true" />}
+        <nav className={`${styles.lateral} ${recolhido ? styles.lateralRecolhida : ''} ${menuLateral ? styles.lateralAberta : ''}`} aria-label="Navegação do portal">
           <ul>
             {menu.map((m) => (
               <li key={m.visao}>
-                <button type="button" className={m.visao === visaoAtual ? styles.lateralAtivo : ''} onClick={() => irPara(m.visao)} aria-current={m.visao === visaoAtual ? 'page' : undefined}>
+                <button
+                  type="button"
+                  className={m.visao === visaoAtual ? styles.lateralAtivo : ''}
+                  onClick={() => irPara(m.visao)}
+                  aria-current={m.visao === visaoAtual ? 'page' : undefined}
+                  title={recolhido ? m.texto : undefined}
+                  aria-label={m.texto}
+                >
                   <Icon iconName={m.icone} />
-                  <span>{m.texto}</span>
-                  {m.visao === 'administracao' && pedidosPendentes > 0 && (
+                  <span className={styles.lateralTexto}>{m.texto}</span>
+                  {m.visao === 'usuarios' && pedidosPendentes > 0 && (
                     <span className={styles.lateralBadge} title={`${pedidosPendentes} pedido(s) de acesso`} aria-label={`${pedidosPendentes} pedidos de acesso`}>
                       {pedidosPendentes > 99 ? '99+' : pedidosPendentes}
                     </span>
@@ -508,7 +595,7 @@ export default function PresenteismoPortal(props: IPortalProps): JSX.Element {
                 style={{ width: '100%', justifyContent: 'flex-start' }}
                 onClick={() => {
                   setNotifAberto(false);
-                  irPara('administracao');
+                  irPara('usuarios');
                 }}
               >
                 <Icon iconName="AddFriend" /> {pedidosPendentes} pedido{pedidosPendentes > 1 ? 's' : ''} de acesso aguardando aprovação
@@ -536,43 +623,3 @@ export default function PresenteismoPortal(props: IPortalProps): JSX.Element {
     </div>
   );
 }
-
-/** Tela de quem ainda não tem acesso: pedido com nome e e-mail corporativo. */
-const SolicitarAcesso: React.FC<{ d: IDados; pedido?: IPedido; bloqueado: boolean }> = ({ d, pedido, bloqueado }) => {
-  const [nome, setNome] = React.useState(d.nome);
-  const [enviando, setEnviando] = React.useState(false);
-  if (bloqueado) return <Aviso titulo="Acesso bloqueado" texto="O administrador bloqueou o seu acesso. Fale com ele para saber mais." />;
-  if (pedido) return <Aviso titulo="Aguardando aprovação" texto={`Seu pedido foi registrado com o e-mail ${pedido.email}. O administrador precisa aprovar e definir seu perfil e sua equipe.`} />;
-  const enviar = async (): Promise<void> => {
-    if (nome.trim().length < 3) {
-      d.avisar('erro', 'Informe seu nome completo.');
-      return;
-    }
-    setEnviando(true);
-    await d.gravar(() => d.servicos.acessos.pedirAcesso(d.email, nome.trim()), 'Pedido enviado. Aguarde a aprovação do administrador.');
-    setEnviando(false);
-  };
-  return (
-    <div className={styles.cartao} style={{ maxWidth: 460, margin: '28px auto' }}>
-      <div className={styles.cartaoTopo}>
-        <h3>Solicitar acesso</h3>
-      </div>
-      <p className={styles.mudo} style={{ margin: '0 0 12px' }}>
-        Você ainda não tem acesso ao portal de Presenteísmo. O administrador aprova e define seu perfil e sua equipe.
-      </p>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <label className={styles.campo}>
-          Nome completo
-          <input type="text" value={nome} onChange={(e) => setNome(e.target.value)} />
-        </label>
-        <label className={styles.campo}>
-          E-mail
-          <input type="text" value={d.email} readOnly />
-        </label>
-        <button type="button" className={styles.botaoAmarelo} disabled={enviando} onClick={() => enviar().catch(() => undefined)}>
-          Solicitar acesso
-        </button>
-      </div>
-    </div>
-  );
-};

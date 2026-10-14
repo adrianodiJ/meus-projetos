@@ -44,6 +44,10 @@ export const Cartao: React.FC<{ titulo?: React.ReactNode; acao?: React.ReactNode
   </section>
 );
 
+/**
+ * Indicador: ícone colorido em cima, número em destaque, legenda e uma linha de contexto.
+ * Clicável (vira botão) só quando recebe onClick.
+ */
 export const Kpi: React.FC<{
   valor: string;
   legenda: string;
@@ -52,22 +56,29 @@ export const Kpi: React.FC<{
   detalhe?: string;
   detalheCor?: string;
   onClick?: () => void;
-}> = ({ valor, legenda, icone, cor, detalhe, detalheCor, onClick }) => (
-  <button type="button" className={styles.kpi} onClick={onClick}>
-    <span className={styles.kpiIcone} style={{ backgroundColor: cor }}>
-      <Icon iconName={icone} />
-    </span>
-    <span className={styles.kpiTexto}>
-      <b>{valor}</b>
-      <span>{legenda}</span>
-    </span>
-    {detalhe && (
-      <span className={styles.kpiVariacao}>
-        <b style={{ color: detalheCor || '#6B7280' }}>{detalhe}</b>
+}> = ({ valor, legenda, icone, cor, detalhe, detalheCor, onClick }) => {
+  const conteudo = (
+    <>
+      <span className={styles.kpiIcone} style={{ backgroundColor: cor }}>
+        <Icon iconName={icone} />
       </span>
-    )}
-  </button>
-);
+      <b className={styles.kpiValor}>{valor}</b>
+      <span className={styles.kpiLegenda}>{legenda}</span>
+      {detalhe && (
+        <span className={styles.kpiDetalhe} style={detalheCor ? { color: detalheCor } : undefined}>
+          {detalhe}
+        </span>
+      )}
+    </>
+  );
+  return onClick ? (
+    <button type="button" className={`${styles.kpi} ${styles.kpiClicavel}`} onClick={onClick}>
+      {conteudo}
+    </button>
+  ) : (
+    <div className={styles.kpi}>{conteudo}</div>
+  );
+};
 
 export const Vazio: React.FC<{ icone?: string; titulo: string; texto?: string }> = ({ icone = 'SearchIssue', titulo, texto, children }) => (
   <div className={styles.vazio}>

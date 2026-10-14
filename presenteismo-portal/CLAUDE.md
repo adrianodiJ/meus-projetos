@@ -20,15 +20,16 @@ Substitui planilhas Excel/VBA. Idioma da interface e dos comentários: portuguê
   MOTIVO, TURNO, SETOR, CONTRACT, LAUNCHED_BY_PROP, ABS_DATE, LAUNCH_DATE; todas as células em texto).
 
 ## Acessos
-- Perfis: coordenador, supervisor, gerente, admin.
-  - Coordenador: uma operação e UM gestor (a própria equipe); um gestor não pode ter dois coordenadores.
-  - Supervisor: várias equipes. Gerente e admin: todas (sem escolher equipe).
-- Cada usuário tem operações liberadas e permissões (painel, acomp, top, exp, lanc, grav; padrão liberado).
-- O administrador principal vem da propriedade do web part (padrão adriano.diasjunior@dhl.com).
-- O filtro por equipe/operação é feito na tela; a segurança real é a das permissões das listas do SharePoint.
+- Todos veem os indicadores (Home, Painel, Acompanhamento). Não existe cadastro manual de coordenador/supervisor/gerente.
+- Coordenadores vêm do headcount: cada GESTOR vira coordenador no upload (documento `cfg/gestores`, um item por gestor+operação,
+  com e-mail buscado no diretório pelo nome; sem e-mail, o vínculo é pelo nome de exibição). O upload substitui a base inteira.
+- Coordenador: lança só a própria equipe; vê só as operações em que é gestor + as liberadas (perfil `acesso` em PRES_Usuarios).
+- Administrador (perfil `admin` em PRES_Usuarios): mesmos acessos do principal; só o principal aprova pedidos de administrador.
+- Pedidos (PRES_Pedidos, coluna Tipo): `admin` ou `op:<id>`. O administrador principal vem da propriedade do web part.
+- O filtro por operação/equipe é feito na tela; a segurança real é a das permissões das listas do SharePoint.
 
 ## Dados (listas do SharePoint, criadas pela tela Administração)
-`PRES_Dados` (JSON em partes: hc/<op>, cfg/params_<op>, cfg/abs_<op>, cfg/ops), `PRES_Usuarios`,
+`PRES_Dados` (JSON em partes: hc/<op>, cfg/params_<op>, cfg/abs_<op>, cfg/ops, cfg/gestores), `PRES_Usuarios`,
 `PRES_Pedidos`, `PRES_Lancamentos` (um item por operação+dia+gestor), `PRES_Historico`.
 
 ## Estrutura

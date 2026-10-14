@@ -8,7 +8,9 @@ $texto: #1f2328;
 $suave: #616a75;
 $borda: #e4e7eb;
 $fundo: #f3f4f6;
-$raio: 10px;
+$raio: 12px;
+// altura única de botões, campos e listas: tudo alinha na mesma linha
+$controle: 38px;
 $sombra: 0 1px 2px rgba(16, 24, 40, 0.06), 0 4px 14px rgba(16, 24, 40, 0.06);
 $fonte: 'Segoe UI', 'Segoe UI Web (West European)', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
 
@@ -66,7 +68,7 @@ $fonte: 'Segoe UI', 'Segoe UI Web (West European)', -apple-system, BlinkMacSyste
 // ---------------------------------------------------------------- barra superior
 .topo {
   background: $amarelo;
-  height: 64px;
+  height: 68px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -74,18 +76,32 @@ $fonte: 'Segoe UI', 'Segoe UI Web (West European)', -apple-system, BlinkMacSyste
   padding: 0 20px;
   position: relative;
   z-index: 5;
-  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.06);
+  border-bottom: 3px solid $vermelho;
 }
 
 .botaoMenu {
-  display: none !important;
-  color: $texto !important;
+  flex-shrink: 0;
+  width: $controle;
+  height: $controle;
+  border: 1.5px solid rgba(0, 0, 0, 0.55);
+  border-radius: 10px;
+  background: transparent;
+  color: $texto;
+  font-size: 14px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.45);
+  }
 }
 
 .marca {
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: 16px;
   border: 0;
   background: transparent;
   cursor: pointer;
@@ -99,22 +115,106 @@ $fonte: 'Segoe UI', 'Segoe UI Web (West European)', -apple-system, BlinkMacSyste
   }
 
   b {
-    font-size: 19px;
+    font-size: 18px;
     font-weight: 700;
     white-space: nowrap;
-    padding-left: 18px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding-left: 16px;
     border-left: 1px solid rgba(0, 0, 0, 0.25);
   }
 }
 
-.marcaSub {
+// Operação atual: cartão branco translúcido com ícone, nome e total de colaboradores.
+.operacao {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  white-space: nowrap;
-  padding-left: 16px;
-  border-left: 1px solid rgba(0, 0, 0, 0.25);
+  gap: 10px;
+  height: 46px;
+  padding: 0 14px 0 6px;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.operacaoIcone {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: $vermelho;
+  color: #fff;
+  font-size: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.operacaoTexto {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+
+  small {
+    font-size: 10.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #4a4a4a;
+  }
+
+  b {
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+  }
+}
+
+.operacaoSelect {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+
+  select {
+    appearance: none;
+    -webkit-appearance: none;
+    border: 0;
+    background: transparent;
+    font: inherit;
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    color: $texto;
+    padding: 0 20px 0 0;
+    cursor: pointer;
+  }
+
+  i {
+    position: absolute;
+    right: 2px;
+    font-size: 11px;
+    pointer-events: none;
+  }
+}
+
+.operacaoInfo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.15;
+  padding-left: 12px;
+  border-left: 1px solid rgba(0, 0, 0, 0.15);
+
+  b {
+    font-size: 15px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  small {
+    font-size: 10.5px;
+    color: #4a4a4a;
+  }
 }
 
 .busca {
@@ -243,43 +343,52 @@ $fonte: 'Segoe UI', 'Segoe UI Web (West European)', -apple-system, BlinkMacSyste
 .corpo {
   display: flex;
   flex: 1;
-  min-height: calc(100vh - 64px);
+  min-height: calc(100vh - 68px);
+  position: relative;
 }
 
 .lateral {
-  width: 220px;
+  width: 232px;
   flex-shrink: 0;
   background: $escuro;
   color: #e6e6e6;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 22px 0 26px;
+  padding: 16px 10px 26px;
+  overflow: hidden;
+  transition: width 0.18s ease;
 
   ul {
     list-style: none;
     margin: 0;
     padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
   }
 
   li button {
+    position: relative;
     width: 100%;
     display: flex;
     align-items: center;
     gap: 14px;
     border: 0;
+    border-radius: 10px;
     background: transparent;
     color: inherit;
-    font-size: 14px;
-    padding: 15px 20px;
+    font-size: 14.5px;
+    padding: 12px 14px;
     cursor: pointer;
     text-align: left;
-    border-left: 4px solid transparent;
+    white-space: nowrap;
 
     i {
       font-size: 17px;
       width: 20px;
       text-align: center;
+      flex-shrink: 0;
     }
 
     &:hover {
@@ -288,14 +397,48 @@ $fonte: 'Segoe UI', 'Segoe UI Web (West European)', -apple-system, BlinkMacSyste
   }
 }
 
+.lateralTexto {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// Menu recolhido: só os ícones, centralizados; o texto aparece na dica (title).
+.lateralRecolhida {
+  width: 68px;
+
+  li button {
+    justify-content: center;
+    padding: 12px 0;
+  }
+
+  .lateralTexto,
+  .lema {
+    display: none;
+  }
+
+  .lateralBadge {
+    position: absolute;
+    top: 4px;
+    right: 6px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    font-size: 10.5px;
+    box-shadow: none;
+  }
+}
+
+.lateralFundo {
+  display: none;
+}
+
 .lateralAtivo {
-  background: $escuro2 !important;
-  border-left-color: $amarelo !important;
-  color: #fff !important;
+  background: $amarelo !important;
+  color: $texto !important;
   font-weight: 600;
 
   i {
-    color: $amarelo;
+    color: $texto;
   }
 }
 
@@ -385,9 +528,11 @@ $fonte: 'Segoe UI', 'Segoe UI Web (West European)', -apple-system, BlinkMacSyste
 // ---------------------------------------------------------------- banner
 .hero {
   position: relative;
-  height: 214px;
+  height: 200px;
   overflow: hidden;
   background: #1b1b1f;
+  border-radius: $raio;
+  flex-shrink: 0;
 }
 
 .heroArte {
@@ -421,11 +566,12 @@ $fonte: 'Segoe UI', 'Segoe UI Web (West European)', -apple-system, BlinkMacSyste
     text-transform: uppercase;
     letter-spacing: 2px;
     font-weight: 600;
+    color: $amarelo;
   }
 
   h1 {
     color: #fff;
-    font-size: 40px;
+    font-size: 36px;
     font-weight: 800;
     letter-spacing: -0.5px;
     margin: 4px 0 8px;
@@ -548,123 +694,158 @@ $fonte: 'Segoe UI', 'Segoe UI Web (West European)', -apple-system, BlinkMacSyste
 }
 
 // ---------------------------------------------------------------- indicadores
+// Cartão de indicador: ícone em cima, número grande, legenda e uma linha de contexto, tudo centralizado.
 .kpis {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 14px;
 }
 
 .kpi {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 14px;
+  justify-content: flex-start;
+  text-align: center;
+  gap: 2px;
   background: #fff;
   border: 1px solid $borda;
   border-radius: $raio;
-  padding: 14px 14px;
+  padding: 18px 14px 16px;
   box-shadow: $sombra;
-  cursor: pointer;
-  text-align: left;
   min-width: 0;
-  transition: transform 0.12s, box-shadow 0.12s;
+  font-family: inherit;
+  color: $texto;
+}
+
+.kpiClicavel {
+  cursor: pointer;
+  transition: transform 0.12s, box-shadow 0.12s, border-color 0.12s;
 
   &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 18px rgba(16, 24, 40, 0.1);
+    transform: translateY(-2px);
+    border-color: #d5d9df;
+    box-shadow: 0 8px 22px rgba(16, 24, 40, 0.1);
+  }
+
+  &:focus-visible {
+    outline: 3px solid rgba(255, 204, 0, 0.6);
+    outline-offset: 2px;
   }
 }
 
 .kpiIcone {
-  width: 50px;
-  height: 50px;
-  border-radius: 10px;
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
   color: #fff;
   font-size: 24px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  margin-bottom: 10px;
 }
 
-// Valor e legenda do indicador centralizados no espaço entre o ícone e a variação.
-.kpiTexto {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  min-width: 0;
-
-  b {
-    font-size: 28px;
-    line-height: 1.1;
-  }
-
-  span {
-    font-size: 12.5px;
-    color: $texto;
-  }
+.kpiValor {
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
 }
 
-.kpiVariacao {
-  margin-left: auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
+.kpiLegenda {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #4b5563;
+}
 
-  b {
-    font-size: 14px;
-    white-space: nowrap;
-  }
-
-  small {
-    font-size: 10px;
-    color: $suave;
-    white-space: nowrap;
-  }
+.kpiDetalhe {
+  margin-top: 8px;
+  padding: 3px 10px;
+  border-radius: 99px;
+  background: #f3f4f6;
+  color: $suave;
+  font-size: 11.5px;
+  font-weight: 600;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 // ---------------------------------------------------------------- atalhos
+// Uma linha só, com os cartões do mesmo tamanho (o número de atalhos varia com o nível de acesso).
+// Sem espaço para todos (~1.080 px de área), vira 4 colunas: duas linhas equilibradas em vez de uma
+// sobra sozinha. O SPFx não compila @container, então a conta usa a janela e a largura do menu.
 .atalhos {
   display: grid;
-  // o número de atalhos varia com o nível de acesso
-  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
   gap: 12px;
 }
 
+// menu aberto (232 px) + margens: a linha única precisa de ~1.360 px de janela
+@media (max-width: 1360px) {
+  .atalhos {
+    grid-auto-flow: row;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+// menu recolhido (68 px): a linha única cabe a partir de ~1.190 px
+@media (min-width: 1190px) and (max-width: 1360px) {
+  .lateralRecolhida ~ .principal .atalhos {
+    grid-auto-flow: column;
+    grid-template-columns: none;
+  }
+}
+
+// Ícone em cima e texto centralizado embaixo: cabe em cartões estreitos sem vazar.
 .atalho {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 12px;
+  justify-content: center;
+  gap: 6px;
   background: #fff;
   border: 1px solid $borda;
   border-radius: $raio;
-  padding: 14px;
+  padding: 14px 10px;
   box-shadow: $sombra;
   cursor: pointer;
-  text-align: left;
+  text-align: center;
   min-width: 0;
+  overflow: hidden;
   color: $texto;
+  font-family: inherit;
 
   > i {
-    font-size: 24px;
+    font-size: 22px;
     flex-shrink: 0;
   }
 
   span {
     display: flex;
     flex-direction: column;
+    align-items: center;
+    gap: 2px;
     min-width: 0;
+    max-width: 100%;
   }
 
   b {
     font-size: 13.5px;
+    line-height: 1.25;
+    overflow-wrap: break-word;
   }
 
   small {
     font-size: 11.5px;
+    line-height: 1.3;
     color: $suave;
+    overflow-wrap: break-word;
   }
 
   &:hover {
@@ -708,19 +889,21 @@ $fonte: 'Segoe UI', 'Segoe UI Web (West European)', -apple-system, BlinkMacSyste
   }
 
   .btnAtualizar {
-    margin-bottom: 4px;
+    margin-bottom: 6px;
   }
 }
 
 .btnAtualizar {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
+  gap: 8px;
   flex-shrink: 0;
-  height: 30px;
-  padding: 0 12px;
+  height: $controle;
+  padding: 0 16px;
   border: 1px solid #c9ced6;
-  border-radius: 6px;
+  border-radius: 8px;
+  font-weight: 600;
   background: #fff;
   color: $texto;
   font-size: 13px;
@@ -1087,21 +1270,35 @@ $fonte: 'Segoe UI', 'Segoe UI Web (West European)', -apple-system, BlinkMacSyste
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
-  margin-bottom: 12px;
+}
 
-  button {
-    border: 1px solid #c9ced6;
-    background: #fff;
-    border-radius: 16px;
-    padding: 5px 14px;
-    font-size: 13px;
-    cursor: pointer;
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 14px;
+  border: 1px solid #c9ced6;
+  background: #fff;
+  border-radius: 99px;
+  font: inherit;
+  font-size: 13px;
+  color: $texto;
+  cursor: pointer;
 
-    &:hover {
-      border-color: $vermelho;
-      color: $vermelho;
-    }
+  i {
+    font-size: 11px;
   }
+
+  &:hover:not(:disabled) {
+    border-color: $texto;
+  }
+}
+
+.chipAtivo {
+  background: #fff3b0;
+  border-color: #fff3b0;
+  font-weight: 600;
 }
 
 // ---------------------------------------------------------------- formulário
@@ -1136,10 +1333,10 @@ $alertaTexto: #92400e;
     color: $texto;
     padding: 7px 10px;
     border: 1px solid #c9ced6;
-    border-radius: 6px;
+    border-radius: 8px;
     background: #fff;
     max-width: 100%;
-    min-height: 34px;
+    height: $controle;
 
     &:focus {
       outline: 0;
@@ -1155,17 +1352,21 @@ $alertaTexto: #92400e;
 
 .botao {
   font: inherit;
-  font-size: 13px;
+  font-size: 13.5px;
+  font-weight: 600;
   cursor: pointer;
-  padding: 7px 14px;
+  height: $controle;
+  padding: 0 16px;
   border: 1px solid #c9ced6;
-  border-radius: 6px;
+  border-radius: 8px;
   background: #fff;
   color: $texto;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  min-height: 34px;
+  justify-content: center;
+  gap: 8px;
+  white-space: nowrap;
+  flex-shrink: 0;
 
   &:hover:not(:disabled) {
     background: #f6f7f9;
@@ -1181,7 +1382,7 @@ $alertaTexto: #92400e;
   @extend .botao;
   background: $amarelo;
   border-color: $amarelo;
-  font-weight: 600;
+  font-weight: 700;
 
   &:hover:not(:disabled) {
     background: color.adjust($amarelo, $lightness: -6%);
@@ -1247,26 +1448,6 @@ $alertaTexto: #92400e;
     max-width: 52ch;
     color: $suave;
     font-size: 13.5px;
-  }
-}
-
-// seletor de operação na barra superior
-.operacao {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  padding-left: 16px;
-  border-left: 1px solid rgba(0, 0, 0, 0.25);
-
-  select {
-    font: inherit;
-    font-weight: 700;
-    border: 1px solid rgba(0, 0, 0, 0.15);
-    background: rgba(255, 255, 255, 0.55);
-    border-radius: 6px;
-    padding: 4px 8px;
-    color: $texto;
   }
 }
 
@@ -1506,6 +1687,8 @@ $alertaTexto: #92400e;
 }
 
 .retro {
+  align-self: flex-end;
+  margin-bottom: 8px;
   border: 1px solid $vermelho;
   color: $vermelho;
   border-radius: 99px;
@@ -1514,7 +1697,7 @@ $alertaTexto: #92400e;
   white-space: nowrap;
 }
 
-// tabelas largas de edição: texto à esquerda e sem quebra
+// tabelas de edição e listagens: cabeçalho e dados centralizados, sem quebra
 .tabelaEsq {
   width: 100%;
   border-collapse: collapse;
@@ -1523,17 +1706,18 @@ $alertaTexto: #92400e;
   th {
     background: #f6f7f9;
     font-weight: 600;
-    padding: 9px 12px;
-    text-align: left;
+    padding: 10px 12px;
+    text-align: center;
     white-space: nowrap;
     border-bottom: 1px solid $borda;
   }
 
   td {
-    padding: 8px 12px;
+    padding: 9px 12px;
     border-bottom: 1px solid #eff1f4;
     vertical-align: middle;
     white-space: nowrap;
+    text-align: center;
   }
 
   tbody tr:hover td {
@@ -1541,7 +1725,7 @@ $alertaTexto: #92400e;
   }
 
   .num {
-    text-align: right;
+    text-align: center;
     font-variant-numeric: tabular-nums;
   }
 }
@@ -1571,7 +1755,7 @@ $alertaTexto: #92400e;
   text-decoration: underline;
   text-underline-offset: 3px;
   cursor: pointer;
-  text-align: left;
+  text-align: center;
 
   &:hover {
     color: $vermelho;
@@ -1685,40 +1869,834 @@ $alertaTexto: #92400e;
   margin-bottom: 12px;
 }
 
-@media (max-width: 1100px) {
-  .painelTopo {
-    grid-template-columns: 1fr 1fr;
-  }
+// ---------------------------------------------------------------- utilitários de linha
+// Texto ao lado dos campos de filtro: alinhado ao centro do controle, não ao rótulo.
+.fileiraNota {
+  align-self: flex-end;
+  display: inline-flex;
+  align-items: center;
+  min-height: $controle;
+  color: $suave;
+  font-size: 12.5px;
+}
 
-  .grade2 {
-    grid-template-columns: 1fr;
+.erroTexto {
+  color: $vermelho;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.botaoIcone {
+  width: 34px;
+  height: 34px;
+  border: 1px solid #c9ced6;
+  border-radius: 8px;
+  background: #fff;
+  color: #a4262c;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+
+  &:hover {
+    background: #fdf3f4;
+    border-color: #a4262c;
   }
 }
 
-@media (max-width: 900px) {
-  .botaoMenu {
-    display: inline-flex !important;
+.buscaCampo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: $controle;
+  padding: 0 12px;
+  border: 1px solid #c9ced6;
+  border-radius: 8px;
+  background: #fff;
+  min-width: 0;
+
+  i {
+    color: $suave;
   }
 
-  .lateral {
+  input {
+    border: 0;
+    outline: 0;
+    flex: 1;
+    min-width: 0;
+    font: inherit;
+    font-size: 13px;
+    background: transparent;
+  }
+
+  &:focus-within {
+    border-color: $amarelo;
+    box-shadow: 0 0 0 3px rgba(255, 204, 0, 0.35);
+  }
+}
+
+// ---------------------------------------------------------------- usuários
+.usuariosGrade {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 16px;
+  align-items: start;
+  scroll-margin-top: 12px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.formLinha {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+
+  input {
+    width: 100%;
+  }
+}
+
+.formBloco {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  > p {
+    margin: 0;
+  }
+}
+
+.formRotulo {
+  font-size: 12px;
+  font-weight: 700;
+  color: $suave;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  em {
+    font-style: normal;
+    text-transform: none;
+    letter-spacing: 0;
+    font-weight: 600;
+    background: #f3f4f6;
+    border-radius: 99px;
+    padding: 1px 9px;
+  }
+}
+
+.formRodape {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 14px;
+  border-top: 1px solid $borda;
+}
+
+.perfis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.perfil {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  text-align: left;
+  padding: 10px 12px;
+  border: 1.5px solid $borda;
+  border-radius: 10px;
+  background: #fff;
+  font: inherit;
+  color: $texto;
+  cursor: pointer;
+
+  b {
+    font-size: 14px;
+  }
+
+  small {
+    font-size: 11.5px;
+    color: $suave;
+    line-height: 1.3;
+  }
+
+  &:hover {
+    border-color: #c9ced6;
+  }
+}
+
+.perfilAtivo {
+  border-color: #fff3b0;
+  background: #fff3b0;
+}
+
+.equipes {
+  border: 1px solid $borda;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.equipesTopo {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 10px;
+  background: #f8f9fa;
+  border-bottom: 1px solid $borda;
+
+  .buscaCampo {
+    flex: 1;
+    height: 34px;
+  }
+}
+
+.equipesLista {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 2px 12px;
+  padding: 8px 10px;
+  max-height: 220px;
+  overflow: auto;
+
+  label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 4px;
+    font-size: 13px;
+    cursor: pointer;
+    border-radius: 6px;
+
+    &:hover {
+      background: #f6f7f9;
+    }
+  }
+}
+
+.ajuda {
+  ol {
+    margin: 0 0 12px;
+    padding-left: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    font-size: 13px;
+    line-height: 1.45;
+  }
+
+  p {
+    margin: 0;
+  }
+}
+
+.pedidos {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pedido {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  border: 1px solid $borda;
+  border-radius: 10px;
+  flex-wrap: wrap;
+}
+
+.pedidoTexto {
+  flex: 1;
+  min-width: 180px;
+  display: flex;
+  flex-direction: column;
+
+  span {
+    font-size: 13px;
+    color: $suave;
+  }
+
+  small {
+    font-size: 11.5px;
+    color: $suave;
+  }
+}
+
+.pedidoAcoes {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pessoa {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+}
+
+.selectTabela {
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid #c9ced6;
+  border-radius: 8px;
+  background: #fff;
+  color: $texto;
+}
+
+.statusOk {
+  background: $verdeFundo;
+  color: #14632b;
+}
+
+.statusPend {
+  background: $alertaFundo;
+  color: $alertaTexto;
+}
+
+.statusRuim {
+  background: $vermelhoFundo;
+  color: #9b1c22;
+}
+
+// ---------------------------------------------------------------- lançamento
+.controleTabela {
+  font: inherit;
+  font-size: 13px;
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid #c9ced6;
+  border-radius: 8px;
+  background: #fff;
+  color: $texto;
+  min-width: 150px;
+
+  &:focus {
+    outline: 0;
+    border-color: $amarelo;
+    box-shadow: 0 0 0 3px rgba(255, 204, 0, 0.35);
+  }
+}
+
+.tabelaLanc {
+  .alterna button {
+    padding: 6px 18px;
+    font-size: 12.5px;
+  }
+}
+
+.linhaAusente td {
+  background: #fff7f7;
+}
+
+.barraResumo {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  color: $suave;
+
+  b {
+    font-size: 15px;
+    color: $texto;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.resumoPres b {
+  color: #14632b;
+}
+
+.resumoAus b {
+  color: $vermelho;
+}
+
+.resumoPend {
+  background: $alertaFundo;
+  color: $alertaTexto;
+  font-weight: 700;
+  font-size: 12px;
+  border-radius: 99px;
+  padding: 3px 10px;
+}
+
+.resumoOk {
+  background: $verdeFundo;
+  color: #14632b;
+  font-weight: 700;
+  font-size: 12px;
+  border-radius: 99px;
+  padding: 3px 10px;
+}
+
+.barraAcoes {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+// ================================================================ responsivo
+// Tablet: grades de duas colunas viram uma; indicadores em 2 x 2.
+@media (max-width: 1100px) {
+  .painelTopo {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+
+    > :first-child {
+      grid-column: 1 / -1;
+      justify-content: center;
+    }
+  }
+
+  .grade2,
+  .usuariosGrade {
+    grid-template-columns: 1fr;
+  }
+
+  .kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .perfis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .operacaoInfo {
+    display: none;
+  }
+
+  .busca {
+    max-width: 260px;
+  }
+}
+
+// Até 900 px o menu lateral vira gaveta sobreposta, aberta pelo botão da barra.
+@media (max-width: 900px) {
+  .topo {
+    gap: 12px;
+    padding: 0 12px;
+  }
+
+  .lateral,
+  .lateralRecolhida {
     position: absolute;
-    top: 64px;
+    top: 0;
     bottom: 0;
     left: 0;
     z-index: 20;
+    width: 260px;
     transform: translateX(-100%);
-    transition: transform 0.15s;
+    transition: transform 0.2s ease;
+    box-shadow: 8px 0 24px rgba(0, 0, 0, 0.25);
+
+    li button {
+      justify-content: flex-start;
+      padding: 13px 14px;
+    }
+
+    .lateralTexto,
+    .lema {
+      display: block;
+    }
   }
 
   .lateralAberta {
     transform: none;
   }
 
+  .lateralFundo {
+    display: block;
+    position: absolute;
+    inset: 0;
+    z-index: 19;
+    background: rgba(15, 15, 18, 0.45);
+  }
+
   .busca {
     display: none;
   }
 
+  .marca b {
+    display: none;
+  }
+
+  .pagina {
+    padding: 16px 14px 0;
+  }
+
+  .homePrincipal {
+    padding: 14px 14px 0;
+  }
+
+  .heroLema {
+    display: none;
+  }
+
+  .heroTexto {
+    padding: 24px 22px;
+  }
+}
+
+// Celular
+@media (max-width: 600px) {
+  .topo {
+    height: 60px;
+  }
+
+  .corpo {
+    min-height: calc(100vh - 60px);
+  }
+
+  .topo {
+    gap: 8px;
+  }
+
+  // só a marca DHL (o logo completo tem Deutsche Post à esquerda)
+  .marca img {
+    height: 16px;
+    width: 112px;
+    object-fit: cover;
+    object-position: right center;
+  }
+
+  .operacao {
+    height: 38px;
+    padding: 0 10px;
+    margin-left: auto;
+    min-width: 0;
+  }
+
+  .operacaoIcone,
+  .botaoSoDesktop {
+    display: none;
+  }
+
+  .operacaoTexto small {
+    display: none;
+  }
+
+  .topoAcoes {
+    gap: 2px;
+  }
+
+  .usuario {
+    padding: 2px;
+
+    > i {
+      display: none;
+    }
+  }
+
+  .usuarioTexto {
+    display: none;
+  }
+
+  .hero {
+    height: auto;
+    min-height: 150px;
+  }
+
+  .heroTexto {
+    padding: 18px;
+
+    h1 {
+      font-size: 26px;
+    }
+
+    p {
+      font-size: 13px;
+    }
+
+    em {
+      font-size: 14px;
+    }
+  }
+
+  .paginaTopo h2 {
+    font-size: 21px;
+  }
+
   .kpis {
+    gap: 10px;
+  }
+
+  .kpi {
+    padding: 14px 8px 12px;
+  }
+
+  .kpiIcone {
+    width: 40px;
+    height: 40px;
+    font-size: 19px;
+    margin-bottom: 6px;
+  }
+
+  .kpiValor {
+    font-size: 24px;
+  }
+
+  .kpiLegenda {
+    font-size: 12px;
+  }
+
+  .kpiDetalhe {
+    font-size: 10.5px;
+    white-space: normal;
+  }
+
+  // Celular: o foco é lançar presença. O atalho principal sobe para logo abaixo do banner
+  // e ocupa a largura toda; os demais atalhos já estão no menu.
+  .atalhos {
+    order: -1;
+    grid-template-columns: 1fr;
+
+    > :not(.atalhoPrincipal) {
+      display: none;
+    }
+  }
+
+  .hero {
+    order: -2;
+  }
+
+  .atalhoPrincipal {
+    flex-direction: row;
+    justify-content: flex-start;
+    text-align: left;
+    padding: 16px 18px;
+
+    span {
+      align-items: flex-start;
+    }
+
+    > i {
+      font-size: 26px;
+    }
+
+    b {
+      font-size: 16px;
+    }
+
+    small {
+      font-size: 12.5px;
+    }
+  }
+
+  .cartao {
+    padding: 14px 12px;
+  }
+
+  // filtros: cada campo ocupa a largura toda (ou meia, para listas curtas)
+  .fileira,
+  .filtros {
+    > label,
+    > .buscaCampo {
+      flex: 1 1 140px;
+      min-width: 0;
+
+      input,
+      select {
+        width: 100%;
+      }
+    }
+
+    > button {
+      flex: 1 1 140px;
+    }
+  }
+
+  .fileiraNota {
+    min-height: 0;
+    flex: 1 1 100%;
+  }
+
+  .filtrosLanc > label:first-child {
+    flex-basis: 100%;
+  }
+
+  .painelTopo {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .formLinha,
+  .perfis {
+    grid-template-columns: 1fr;
+  }
+
+  .formRodape {
+    flex-direction: column-reverse;
+
+    button {
+      width: 100%;
+    }
+  }
+
+  .pedidoAcoes {
+    width: 100%;
+
+    button {
+      flex: 1;
+    }
+  }
+
+  .linhaGestor {
+    grid-template-columns: minmax(0, 1fr) 64px;
+
+    > :nth-child(2) {
+      grid-column: 1 / -1;
+      grid-row: 2;
+    }
+  }
+
+  // Lançamento no celular: cada colaborador vira um cartão com a presença em destaque.
+  .tabelaLanc {
+    thead {
+      display: none;
+    }
+
+    tbody {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    tr {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-areas:
+        'nome status'
+        'funcao turno'
+        'presenca presenca'
+        'motivo motivo'
+        'obs obs';
+      gap: 6px 10px;
+      padding: 12px;
+      border: 1px solid $borda;
+      border-radius: 10px;
+      background: #fff;
+    }
+
+    tr.linhaAusente {
+      background: #fffafa;
+    }
+
+    td,
+    tbody tr:hover td,
+    .linhaAusente td {
+      display: block;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      white-space: normal;
+      text-align: left;
+    }
+
+    .cNome {
+      grid-area: nome;
+      font-size: 14px;
+    }
+
+    .cStatus {
+      grid-area: status;
+      text-align: right;
+    }
+
+    .cFuncao {
+      grid-area: funcao;
+      color: $suave;
+      font-size: 12px;
+    }
+
+    .cTurno {
+      grid-area: turno;
+      color: $suave;
+      font-size: 12px;
+      text-align: right;
+    }
+
+    .cPresenca {
+      grid-area: presenca;
+      margin-top: 4px;
+    }
+
+    .cMotivo {
+      grid-area: motivo;
+    }
+
+    .cObs {
+      grid-area: obs;
+    }
+
+    .cVazio {
+      display: none;
+    }
+
+    .alterna {
+      display: flex;
+      width: 100%;
+      padding: 3px;
+
+      button {
+        flex: 1;
+        height: 42px;
+        font-size: 15px;
+      }
+    }
+
+    .controleTabela {
+      width: 100%;
+      min-width: 0;
+      height: 42px;
+      font-size: 14px;
+    }
+  }
+
+  // barra de lançamento: fica no rodapé da tela, com o botão grande
+  .barraFixa {
+    bottom: 0;
+    margin: 0 -14px;
+    border-radius: 14px 14px 0 0;
+    padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .barraResumo {
+    justify-content: space-between;
+  }
+
+  .barraAcoes {
+    flex-wrap: nowrap;
+
+    button {
+      flex: 1;
+      height: 46px;
+    }
+  }
+
+  .botaoLancar {
+    flex: 2 !important;
+    font-size: 15px;
+  }
+
+  .soDesktop {
+    display: none !important;
+  }
+
+  .paginacao {
+    justify-content: center;
   }
 }

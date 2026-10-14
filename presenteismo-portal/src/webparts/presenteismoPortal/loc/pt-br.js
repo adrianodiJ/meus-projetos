@@ -3,7 +3,6 @@ define([], function() {
     "PropertyPaneDescription": "Configurações do Presenteísmo Portal",
     "ExibicaoGroupName": "Exibição",
     "TituloLabel": "Título (barra superior)",
-    "SubtituloLabel": "Subtítulo (barra superior)",
     "FraseLabel": "Frase do banner",
     "ImagemBannerLabel": "Imagem do banner (URL)",
     "ImagemBannerDescription": "Opcional. Vazio = ilustração padrão. Use uma imagem de uma biblioteca do SharePoint.",

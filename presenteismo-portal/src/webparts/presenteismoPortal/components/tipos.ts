@@ -1,6 +1,7 @@
 import type {
   IAbs,
   IColab,
+  IGestor,
   IHeadcount,
   IHistorico,
   ILancamento,
@@ -9,6 +10,7 @@ import type {
   IPedido,
   IUsuario
 } from '../models';
+import type { IAcesso } from '../lib/acesso';
 import type { AcessosService } from '../services/AcessosService';
 import type { DadosService } from '../services/DadosService';
 import type { HistoricoService } from '../services/HistoricoService';
@@ -16,9 +18,9 @@ import type { LancamentosService } from '../services/LancamentosService';
 import type { PerfilService } from '../services/PerfilService';
 import type { SpClient } from '../services/SpClient';
 
-export type Visao = 'home' | 'painel' | 'lancamento' | 'acompanhamento' | 'headcount' | 'relatorios' | 'administracao';
+export type Visao = 'home' | 'painel' | 'lancamento' | 'acompanhamento' | 'headcount' | 'relatorios' | 'acesso' | 'usuarios' | 'administracao';
 
-export const VISOES: Visao[] = ['home', 'painel', 'lancamento', 'acompanhamento', 'headcount', 'relatorios', 'administracao'];
+export const VISOES: Visao[] = ['home', 'painel', 'lancamento', 'acompanhamento', 'headcount', 'relatorios', 'acesso', 'usuarios', 'administracao'];
 
 export const MENU: { visao: Visao; texto: string; icone: string }[] = [
   { visao: 'home', texto: 'Home', icone: 'Home' },
@@ -27,6 +29,8 @@ export const MENU: { visao: Visao; texto: string; icone: string }[] = [
   { visao: 'acompanhamento', texto: 'Acompanhamento', icone: 'BulletedList' },
   { visao: 'relatorios', texto: 'Relatórios', icone: 'ReportDocument' },
   { visao: 'headcount', texto: 'Headcount', icone: 'People' },
+  { visao: 'acesso', texto: 'Meu acesso', icone: 'Contact' },
+  { visao: 'usuarios', texto: 'Usuários e acessos', icone: 'AddFriend' },
   { visao: 'administracao', texto: 'Administração', icone: 'Settings' }
 ];
 
@@ -41,7 +45,6 @@ export interface IServicos {
 
 export interface IPortalProps {
   titulo: string;
-  subtitulo: string;
   frase: string;
   imagemBanner: string;
   adminEmail: string;
@@ -59,8 +62,11 @@ export interface IDados {
   params: IParametros;
   abs: IAbs;
   absExiste: boolean;
+  /** administradores e liberações extras (PRES_Usuarios) */
   usuarios: IUsuario[];
   pedidos: IPedido[];
+  /** coordenadores criados pelo headcount, de todas as operações */
+  gestores: IGestor[];
   hist: IHistorico[];
   /** lançamentos do mês selecionado no painel */
   lancMes: ILancamento[];
@@ -71,14 +77,19 @@ export interface IDados {
 
   email: string;
   nome: string;
-  /** usuário efetivo (administrador principal vira admin aprovado, mesmo sem cadastro) */
-  eu: IUsuario;
+  /** perfil do usuário: administrador, coordenador (pelo headcount) ou visitante */
+  acesso: IAcesso;
   admin: boolean;
-  /** vê todas as equipes (admin ou gerente) */
+  /** lança para todas as equipes da operação (administrador) */
   completo: boolean;
+  /** painel, acomp, top: todos; exp: coordenador ou administrador; lanc/grav: quem tem equipe na operação */
   pm: (permissao: string) => boolean;
-  /** colaboradores que o usuário pode ver (suas equipes; todas para admin/gerente) */
+  /** colaboradores da operação (indicadores: todos veem) */
   equipe: IColab[];
+  /** colaboradores que o usuário lança (a própria equipe; todos para administrador) */
+  minhaEquipe: IColab[];
+  /** gestores (nomes da planilha) do usuário na operação atual */
+  meusGestores: string[];
   nomeDe: (email: string) => string;
   opNome: (id: string) => string;
   podeOperacao: (id: string) => boolean;

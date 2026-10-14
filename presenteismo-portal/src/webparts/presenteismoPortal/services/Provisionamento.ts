@@ -47,7 +47,7 @@ const LISTAS: IListaSpec[] = [
   },
   {
     titulo: LISTA_USUARIOS,
-    descricao: 'Presenteísmo — usuários, perfis, equipes e permissões (gerenciada pelo administrador no portal).',
+    descricao: 'Presenteísmo — administradores e liberações de operação (gerenciada pelo portal). Coordenadores vêm do headcount.',
     somenteLeitura: true,
     campos: [
       texto('Nome', 'Nome'),
@@ -60,9 +60,9 @@ const LISTAS: IListaSpec[] = [
   },
   {
     titulo: LISTA_PEDIDOS,
-    descricao: 'Presenteísmo — pedidos de acesso feitos pelos próprios usuários.',
+    descricao: 'Presenteísmo — pedidos de acesso (administrador ou outra operação) feitos pelos próprios usuários.',
     somenteLeitura: false,
-    campos: [texto('Nome', 'Nome'), texto('Em', 'Em')]
+    campos: [texto('Nome', 'Nome'), texto('Em', 'Em'), texto('Tipo', 'Tipo')]
   },
   {
     titulo: LISTA_LANCAMENTOS,

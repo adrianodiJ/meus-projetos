@@ -1,10 +1,11 @@
 import * as React from 'react';
 import styles from './QualityPortal.module.scss';
 import { lerXlsx } from '../lib/xlsxLeitor';
-import { dataHora, ehTemp, nz, ordenarPt } from '../lib/util';
+import { chave, dataHora, ehTemp, int, num, nz, ordenarPt, unicos } from '../lib/util';
 import { type IColab, ROTULO_TURNO, type Turno, TURNOS } from '../models';
+import { DOC_GESTORES, montarCoordenadores, substituirOperacao } from '../services/Coordenadores';
 import type { IDados } from './tipos';
-import { Cartao, Pagina } from './ui';
+import { Cartao, Kpi, Pagina } from './ui';
 
 type CampoHc = 'm' | 'u' | 'n' | 'sn' | 'g' | 'c' | 'a' | 't' | 's';
 
@@ -52,6 +53,9 @@ interface IDiff {
   alterados: number;
   nomesAdd: string[];
   nomesRem: string[];
+  /** coordenadores (gestores) que entram e saem */
+  gAdd: string[];
+  gRem: string[];
 }
 
 function montarDiff(plan: IPlan, atuais: IColab[]): IDiff | undefined {
@@ -102,13 +106,22 @@ function montarDiff(plan: IPlan, atuais: IColab[]): IDiff | undefined {
     remE: rem.filter((k) => !ehTemp(velho[k])).length,
     alterados: Object.keys(novo).filter((k) => velho[k] && campos.some((c) => (velho[k][c] || '') !== (novo[k][c] || ''))).length,
     nomesAdd: add.slice(0, 8).map((k) => novo[k].n || novo[k].u),
-    nomesRem: rem.slice(0, 8).map((k) => velho[k].n || velho[k].u)
+    nomesRem: rem.slice(0, 8).map((k) => velho[k].n || velho[k].u),
+    ...diffGestores(rows, atuais)
   };
+}
+
+function diffGestores(novos: IColab[], atuais: IColab[]): { gAdd: string[]; gRem: string[] } {
+  const ga = unicos(novos.map((r) => r.g).filter(Boolean));
+  const gv = unicos(atuais.map((r) => r.g).filter(Boolean));
+  const tem = (lista: string[], g: string): boolean => lista.some((x) => chave(x) === chave(g));
+  return { gAdd: ga.filter((g) => !tem(gv, g)).sort(ordenarPt), gRem: gv.filter((g) => !tem(ga, g)).sort(ordenarPt) };
 }
 
 export const Headcount: React.FC<{ d: IDados }> = ({ d }) => {
   const [plan, setPlan] = React.useState<IPlan | undefined>(undefined);
   const [lendo, setLendo] = React.useState(false);
+  const [aplicando, setAplicando] = React.useState('');
   const [busca, setBusca] = React.useState('');
   const arquivoRef = React.useRef<HTMLInputElement>(null);
   const R = d.hc.rows;
@@ -140,10 +153,19 @@ export const Headcount: React.FC<{ d: IDados }> = ({ d }) => {
 
   const aplicar = async (): Promise<void> => {
     if (!diff || !plan) return;
+    setAplicando('Gravando o headcount…');
     const ok = await d.gravar(async () => {
+      // a base antiga é substituída por inteiro: só fica o que está no arquivo novo
       await d.servicos.dados.gravar(`hc/${d.op}`, { rows: diff.rows, em: new Date().toISOString(), por: d.email, arq: plan.arquivo });
-      d.registrar('headcount', `+${diff.add.length} / −${diff.rem.length} · ${diff.rows.length} ativos`);
-    }, 'Headcount aplicado. As listas de presença já usam a nova base.');
+      const daOp = await montarCoordenadores(d.servicos.acessos, d.op, diff.rows, d.gestores, setAplicando);
+      setAplicando('Atualizando os coordenadores…');
+      await d.servicos.dados.gravar(DOC_GESTORES, { list: substituirOperacao(d.gestores, d.op, daOp), em: new Date().toISOString() });
+      // cadastros manuais do modelo antigo (coordenador/supervisor/gerente) deixam de existir
+      await d.servicos.acessos.limparLegados();
+      const semEmail = daOp.filter((g) => !g.email).length;
+      d.registrar('headcount', `+${diff.add.length} / −${diff.rem.length} · ${diff.rows.length} ativos · ${daOp.length} coordenadores (${semEmail} sem e-mail)`);
+    }, 'Headcount aplicado. Listas de presença e coordenadores já seguem a nova planilha.');
+    setAplicando('');
     if (ok) setPlan(undefined);
   };
 
@@ -169,7 +191,7 @@ export const Headcount: React.FC<{ d: IDados }> = ({ d }) => {
           <input ref={arquivoRef} type="file" accept=".xlsx,.xlsm" disabled={lendo} onChange={(e) => ler(e.target.files ? e.target.files[0] : undefined).catch(() => undefined)} />
         </label>
         <p className={styles.mudo} style={{ margin: '10px 0 0' }}>
-          Modelo esperado (aba TT ATIVOS): USER, MATRICULA, STATUS, GESTOR, NOME, SOBRENOME, CARGO, AREA, TURNO. Só entram linhas com status Active, e área terminada em TEMP conta como temporário.
+          Modelo esperado (aba TT ATIVOS): USER, MATRICULA, STATUS, GESTOR, NOME, SOBRENOME, CARGO, AREA, TURNO. Só entram linhas com status Active, e área terminada em TEMP conta como temporário. O arquivo novo substitui a base atual por inteiro, e cada GESTOR da planilha vira coordenador da própria equipe.
         </p>
         <p className={styles.mudo} style={{ margin: '6px 0 0' }}>
           {R.length
@@ -213,12 +235,16 @@ export const Headcount: React.FC<{ d: IDados }> = ({ d }) => {
                     {diff.rem.length > 8 ? '…' : ''}
                   </p>
                 )}
+                <p className={styles.mudo} style={{ margin: '0 0 4px' }}>
+                  Coordenadores: <b>{diff.gAdd.length}</b> novos{diff.gAdd.length ? ` (${diff.gAdd.join(', ')})` : ''} · <b>{diff.gRem.length}</b> saem
+                  {diff.gRem.length ? ` (${diff.gRem.join(', ')})` : ''}. A equipe de cada um passa a ser a da planilha.
+                </p>
                 <p className={styles.mudo} style={{ margin: '0 0 12px' }}>
                   Ignorados: {diff.inativos} inativos, {diff.semTurno} sem turno reconhecido, {diff.repetidos} repetidos. Quem sai do arquivo deixa de contar no painel, e as faltas já lançadas continuam guardadas.
                 </p>
                 <div className={styles.linhaBotoes}>
-                  <button type="button" className={styles.botaoAmarelo} onClick={() => aplicar().catch(() => undefined)}>
-                    Aplicar ao cadastro
+                  <button type="button" className={styles.botaoAmarelo} disabled={!!aplicando} onClick={() => aplicar().catch(() => undefined)}>
+                    {aplicando || 'Aplicar e substituir a base atual'}
                   </button>
                   <button type="button" className={styles.botao} onClick={() => setPlan(undefined)}>
                     Cancelar
@@ -241,23 +267,11 @@ export const Headcount: React.FC<{ d: IDados }> = ({ d }) => {
 
       {R.length > 0 && (
         <>
-          <div className={styles.grade}>
-            <div className={styles.indicador}>
-              <span>Ativos</span>
-              <b>{R.length}</b>
-            </div>
-            <div className={styles.indicador}>
-              <span>Efetivos</span>
-              <b>{efetivos.length}</b>
-            </div>
-            <div className={styles.indicador}>
-              <span>Temporários</span>
-              <b>{R.length - efetivos.length}</b>
-            </div>
-            <div className={styles.indicador}>
-              <span>Efetivos por turno</span>
-              <small style={{ fontSize: 13, color: '#1f2328', fontWeight: 600 }}>{TURNOS.map((t) => `${ROTULO_TURNO[t]} ${efetivos.filter((r) => r.t === t).length}`).join(' · ')}</small>
-            </div>
+          <div className={styles.kpis}>
+            <Kpi valor={int(R.length)} legenda="Colaboradores ativos" icone="People" cor="#1F6FD1" detalhe={d.hc.em ? `base de ${dataHora(d.hc.em, 'curto')}` : undefined} />
+            <Kpi valor={int(efetivos.length)} legenda="Efetivos" icone="Contact" cor="#1E9E3E" detalhe={TURNOS.map((t) => `${ROTULO_TURNO[t]} ${int(efetivos.filter((r) => r.t === t).length)}`).join(' · ')} />
+            <Kpi valor={int(R.length - efetivos.length)} legenda="Temporários" icone="Clock" cor="#F28C00" detalhe="área terminada em TEMP" />
+            <Kpi valor={int(gl.length)} legenda="Gestores" icone="Org" cor="#4B5563" detalhe={gl.length ? `média de ${num(R.length / gl.length)} por gestor` : undefined} />
           </div>
 
           <Cartao titulo="Span of control">

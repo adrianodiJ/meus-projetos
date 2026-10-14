@@ -1,7 +1,8 @@
 node_modules
-lib
+/lib
 dist
 temp
 release
 .heft
 *.log
+sharepoint/solution/debug

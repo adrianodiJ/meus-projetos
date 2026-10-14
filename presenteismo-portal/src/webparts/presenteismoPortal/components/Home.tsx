@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Icon } from '@fluentui/react';
 import styles from './QualityPortal.module.scss';
 import { resumoPainel } from '../lib/calculo';
-import { chave, dataHora, dmy, fp, ordenarPt } from '../lib/util';
+import { chave, dataHora, dmy, fp, int, num, ordenarPt } from '../lib/util';
 import { ROTULO_TURNO } from '../models';
 import type { IDados, Visao } from './tipos';
 import { BotaoAtualizar, Cartao, Hero, Kpi, Paginacao, Vazio } from './ui';
@@ -66,7 +66,8 @@ export const Home: React.FC<IHomeProps> = ({ d, frase, imagemBanner }) => {
     { visao: 'acompanhamento', icone: 'BulletedList', titulo: 'Acompanhamento', texto: 'Lançamentos por gestor' },
     { visao: 'relatorios', icone: 'ReportDocument', titulo: 'Relatórios', texto: 'Exportar em Excel' },
     { visao: 'headcount', icone: 'People', titulo: 'Headcount', texto: 'Atualizar cadastro' },
-    { visao: 'administracao', icone: 'Settings', titulo: 'Administração', texto: 'Usuários e parâmetros' }
+    { visao: 'usuarios', icone: 'AddFriend', titulo: 'Usuários e acessos', texto: 'Coordenadores, pedidos e administradores' },
+    { visao: 'administracao', icone: 'Settings', titulo: 'Administração', texto: 'Listas e parâmetros' }
   ];
   const permitido = (v: Visao): boolean =>
     v === 'painel' ? d.pm('painel') : v === 'acompanhamento' ? d.pm('acomp') : v === 'relatorios' ? d.pm('exp') : d.admin;
@@ -79,28 +80,43 @@ export const Home: React.FC<IHomeProps> = ({ d, frase, imagemBanner }) => {
 
   return (
     <div className={styles.home}>
-      <Hero imagem={imagemBanner} frase={frase} />
       <div className={styles.homePrincipal}>
+        <Hero imagem={imagemBanner} frase={frase} />
         <div className={styles.kpis}>
           <Kpi
             valor={fp(resumo.v)}
             legenda="Presenteísmo do mês"
-            icone="CheckMark"
-            cor={ok ? '#1E9E3E' : '#D40511'}
-            detalhe={`Meta ${d.params.meta}%`}
-            detalheCor={ok ? '#1E9E3E' : '#D40511'}
-            onClick={() => d.irPara('painel')}
+            icone="Medal"
+            cor={resumo.v === null ? '#6B7280' : ok ? '#1E9E3E' : '#D40511'}
+            detalhe={resumo.v === null ? `Meta ${fp(d.params.meta)}` : ok ? `Dentro da meta de ${fp(d.params.meta)}` : `${num(d.params.meta - (resumo.v || 0))} p.p. abaixo da meta`}
+            detalheCor={resumo.v === null ? undefined : ok ? '#14632b' : '#9b1c22'}
+            onClick={d.pm('painel') ? () => d.irPara('painel') : undefined}
           />
-          <Kpi valor={String(resumo.faltasMes.length)} legenda="Faltas no mês" icone="Cancel" cor="#D40511" detalhe="injust. + atestados" onClick={() => d.irPara('painel')} />
           <Kpi
-            valor={String(pendentes)}
-            legenda={`Sem lançamento em ${d.ldate.slice(8)}/${d.ldate.slice(5, 7)}`}
+            valor={int(resumo.faltasMes.length)}
+            legenda="Faltas no mês"
+            icone="UserRemove"
+            cor="#D40511"
+            detalhe="injustificadas + atestados"
+            onClick={d.pm('painel') ? () => d.irPara('painel') : undefined}
+          />
+          <Kpi
+            valor={int(pendentes)}
+            legenda={`Equipes sem lançamento · ${d.ldate.slice(8)}/${d.ldate.slice(5, 7)}`}
             icone="Clock"
-            cor="#F2B600"
-            detalhe={`de ${totalEquipes} equipes`}
+            cor="#F28C00"
+            detalhe={pendentes ? `${int(totalEquipes - pendentes)} de ${int(totalEquipes)} equipes lançadas` : 'Todas as equipes lançaram'}
+            detalheCor={pendentes ? undefined : '#14632b'}
             onClick={() => d.irPara(d.pm('acomp') ? 'acompanhamento' : 'lancamento')}
           />
-          <Kpi valor={String(d.equipe.length)} legenda="Colaboradores" icone="People" cor="#1F6FD1" detalhe={`${efetivos} efetivos`} onClick={() => d.irPara('lancamento')} />
+          <Kpi
+            valor={int(d.equipe.length)}
+            legenda="Colaboradores"
+            icone="People"
+            cor="#1F6FD1"
+            detalhe={`${int(efetivos)} efetivos · ${int(d.equipe.length - efetivos)} temporários`}
+            onClick={d.pm('lanc') ? () => d.irPara('lancamento') : undefined}
+          />
         </div>
 
         <div className={styles.atalhos}>
@@ -179,7 +195,7 @@ export const Home: React.FC<IHomeProps> = ({ d, frase, imagemBanner }) => {
                         <td className={styles.colId}>{dmy(x.l.d)}</td>
                         <td>{x.l.g}</td>
                         <td>{x.turno}</td>
-                        <td>{x.total}</td>
+                        <td>{int(x.total)}</td>
                         <td>
                           <span className={styles.pill} style={{ background: '#dcfce7', color: '#14632b' }}>
                             {x.pres}
