@@ -56,7 +56,8 @@ export default class PresenteismoPortalWebPart extends BaseClientSideWebPart<IPr
   public render(): void {
     const user = this.context.pageContext.user;
     const element: React.ReactElement<IPortalProps> = React.createElement(PresenteismoPortal, {
-      titulo: this.properties.titulo || 'QRA LATAM : Brasil',
+      // páginas já publicadas guardaram o título antigo como propriedade: passa a valer o novo nome
+      titulo: !this.properties.titulo || this.properties.titulo.trim() === 'QRA LATAM : Brasil' ? 'TeamPulse' : this.properties.titulo,
       frase: this.properties.frase || 'Presença hoje. Resultado sempre.',
       imagemBanner: (this.properties.imagemBanner || '').trim(),
       adminEmail: (this.properties.adminEmail || ADMIN_PADRAO).trim().toLowerCase(),

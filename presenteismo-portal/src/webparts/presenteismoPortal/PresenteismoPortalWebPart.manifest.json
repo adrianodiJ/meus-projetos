@@ -20,7 +20,7 @@
     "description": { "default": "Lançamento de presença, painel de presenteísmo, acompanhamento e relatórios" },
     "officeFabricIconFontName": "CheckList",
     "properties": {
-      "titulo": "QRA LATAM : Brasil",
+      "titulo": "TeamPulse",
       "frase": "Presença hoje. Resultado sempre.",
       "imagemBanner": "",
       "adminEmail": "adriano.diasjunior@dhl.com",
