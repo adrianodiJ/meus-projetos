@@ -1,6 +1,7 @@
 import type { IColab, ILancamento, IParametros, Turno } from '../models';
-import { MOTIVOS_FALTA } from '../models';
-import { dias, dt, ehTemp, iso, previsto, semana } from './util';
+import { MOTIVOS_FALTA, TURNOS } from '../models';
+import { inicioPeriodo, mapaDias, periodo } from './calendario';
+import { dias, dt, ehTemp, semana } from './util';
 
 export interface IFalta {
   u: string;
@@ -20,9 +21,9 @@ export interface IBloco {
   b: string;
 }
 
-export function periodoDoMes(ym: string): [string, string] {
-  const [y, m] = ym.split('-').map(Number);
-  return [iso(new Date(y, m - 1, 1)), iso(new Date(y, m, 0))];
+/** Período de apuração do painel (mês-calendário ou ciclo da folha ponto, conforme o parâmetro de início). */
+export function periodoDoMes(ym: string, par?: IParametros): [string, string] {
+  return periodo(ym, par ? inicioPeriodo(par) : 1);
 }
 
 export function horasDoTurno(par: IParametros, t: Turno): number {
@@ -42,9 +43,14 @@ export function faltas(lancs: ILancamento[]): IFalta[] {
   return o;
 }
 
-/** Horas previstas e de falta por semana e turno. */
+/**
+ * Horas previstas e de falta por semana e turno, como na planilha:
+ * previstas = pessoas × horas do turno × dias que contam; falta = (injustificadas + atestados) × horas do turno.
+ */
 export function calcular(rows: IColab[], fl: IFalta[], ym: string, par: IParametros): IBloco[] {
-  const [ini, fim] = periodoDoMes(ym);
+  const [ini, fim] = periodoDoMes(ym, par);
+  const conta = mapaDias(ini, fim, par.aj);
+  const previsto = (d: string, t: Turno): boolean => !!conta[d] && conta[d][t];
   const R: Record<string, IBloco> = {};
   const ix: Record<string, IColab> = {};
   rows.forEach((r) => (ix[r.u] = r));
@@ -89,11 +95,35 @@ export function resumoPainel(equipe: IColab[], lancs: ILancamento[], ym: string,
   const fl = faltas(lancs);
   const res = calcular(rows, fl, ym, par);
   const total = somar(res);
-  const [ini, fim] = periodoDoMes(ym);
+  const [ini, fim] = periodoDoMes(ym, par);
+  const conta = mapaDias(ini, fim, par.aj);
+  const previsto = (d: string, t: Turno): boolean => !!conta[d] && conta[d][t];
   const ix: Record<string, IColab> = {};
   rows.forEach((r) => (ix[r.u] = r));
   const faltasMes = fl.filter((f) => ix[f.u] && f.d >= ini && f.d <= fim && previsto(f.d, ix[f.u].t));
   return { rows, res, total, v: pct(total.p, total.f), faltasMes, ix };
+}
+
+/** Quadro igual ao da planilha: por turno, pessoas × horas por dia × dias = total de horas. */
+export interface ILinhaTurno {
+  t: Turno;
+  pessoas: number;
+  horas: number;
+  dias: number;
+  total: number;
+  falta: number;
+  v: number | null;
+}
+
+export function quadroTurnos(r: IResumoPainel, ym: string, par: IParametros): ILinhaTurno[] {
+  const [ini, fim] = periodoDoMes(ym, par);
+  const conta = mapaDias(ini, fim, par.aj);
+  return TURNOS.map((t) => {
+    const pessoas = r.rows.filter((x) => x.t === t).length;
+    const n = dias(ini, fim).filter((d) => conta[d] && conta[d][t]).length;
+    const s = somar(r.res.filter((o) => o.t === t));
+    return { t, pessoas, horas: horasDoTurno(par, t), dias: n, total: s.p, falta: s.f, v: pct(s.p, s.f) };
+  });
 }
 
 export { dt };

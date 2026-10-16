@@ -13,8 +13,13 @@ Substitui planilhas Excel/VBA. Idioma da interface e dos comentários: portuguê
 - Só "Falta injustificada" e "Atestado" contam como falta. Os demais motivos (Férias, Sinergia, Treinamento,
   Abono chefia, Banco de horas, Desligado, Afastamento, Outros) ficam registrados e não entram no cálculo.
 - Só efetivos entram no cálculo: área terminada em TEMP é temporário (aparece no Lançamento e nos relatórios).
-- Horas por dia: ADM 8,75; PRIMEIRO 8; SEGUNDO 8. Domingo não conta; sábado não conta para ADM.
-- A falta conta no dia da falta. Período = mês-calendário. Semana começa no domingo (WEEKNUM).
+- Horas por dia: ADM 8,75; PRIMEIRO 8; SEGUNDO 8. Total previsto = pessoas × horas do turno × dias que contam
+  (como na planilha "Presenteísmo FÍSIA"); falta = (injustificadas + atestados) × horas do turno.
+- Dias que contam (folha ponto, `lib/calendario.ts`): domingo nunca; ADM folga todos os sábados; PRIMEIRO e SEGUNDO
+  folgam os 2 primeiros sábados do período (3 se o período tiver 5 sábados). O administrador marca/desmarca dias por
+  turno no calendário do Painel (ajustes em `cfg/params_<op>.aj`).
+- A falta conta no dia da falta, só se o dia conta para o turno. Período = mês-calendário por padrão; o dia de início
+  é parâmetro (`cfg/params_<op>.ini`, ex.: 13 = de 13 a 12). Semana começa no domingo (WEEKNUM).
 - Headcount vem de Excel (aba TT ATIVOS: USER, MATRICULA, STATUS, GESTOR, NOME, SOBRENOME, CARGO, AREA, TURNO).
 - Relatório "Histórico ABS" segue o layout do ABS+ (colunas ABS_ID, RE, NOME, FUNÇÃO, GESTOR_LDAP, GESTOR_NAME,
   MOTIVO, TURNO, SETOR, CONTRACT, LAUNCHED_BY_PROP, ABS_DATE, LAUNCH_DATE; todas as células em texto).

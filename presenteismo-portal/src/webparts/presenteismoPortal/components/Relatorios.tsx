@@ -4,6 +4,7 @@ import { baixarArquivo, gerarXlsx, TIPO_XLSX } from '../lib/xlsx';
 import { relatorioAbs, relatorioResumo } from '../lib/relatorios';
 import { dias, fmt, iso, ordenarPt, unicos } from '../lib/util';
 import { periodoDoMes } from '../lib/calculo';
+import { contadorDeDias } from '../lib/calendario';
 import { ROTULO_TURNO, TURNOS } from '../models';
 import type { IDados } from './tipos';
 import { Aviso, Pagina } from './ui';
@@ -12,7 +13,7 @@ type Tipo = 'abs' | 'res';
 
 export const Relatorios: React.FC<{ d: IDados }> = ({ d }) => {
   const td = iso(new Date());
-  const [ini0, fim0] = periodoDoMes(d.ym);
+  const [ini0, fim0] = periodoDoMes(d.ym, d.params);
   const [tipo, setTipo] = React.useState<Tipo>('abs');
   const [r0, setR0] = React.useState(ini0 > td ? td : ini0);
   const [r1, setR1] = React.useState(fim0 > td ? td : fim0);
@@ -54,7 +55,7 @@ export const Relatorios: React.FC<{ d: IDados }> = ({ d }) => {
         docs.push(...(await d.servicos.lancamentos.periodo(d.op, s, e)));
         s = iso(new Date(new Date(`${e}T12:00:00`).getTime() + 864e5));
       }
-      const esc = { colabs, inicio: r0, fim, op: d.op };
+      const esc = { colabs, inicio: r0, fim, op: d.op, conta: contadorDeDias(d.params) };
       const rel = tipo === 'abs' ? relatorioAbs(docs, esc, d.abs, d.nomeDe) : relatorioResumo(docs, esc, d.nomeDe);
       baixarArquivo(gerarXlsx(rel.planilhas), rel.arquivo, TIPO_XLSX);
       d.avisar('ok', rel.mensagem);

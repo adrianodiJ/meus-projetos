@@ -70,6 +70,10 @@ export interface IHeadcount {
 export interface IParametros {
   h: Record<Turno, number>;
   meta: number;
+  /** dia de início do período de apuração (folha ponto); 1 = mês-calendário */
+  ini?: number;
+  /** ajustes do calendário: dia → turno → conta ou não conta */
+  aj?: Record<string, Partial<Record<Turno, boolean>>>;
 }
 
 export const PARAMETROS_PADRAO: IParametros = { h: { ADM: 8.75, PRIMEIRO: 8, SEGUNDO: 8 }, meta: 98 };

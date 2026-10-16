@@ -1,6 +1,7 @@
 import { type IAbs, type IColab, type ILancamento, ROTULO_TURNO, TURNOS } from '../models';
 import type { Celula, IPlanilhaXlsx } from './xlsx';
 import { chave, dias, dmy, dt, ehTemp, ordenarPt, p2, previsto } from './util';
+import type { Turno } from '../models';
 
 export interface IRelatorio {
   planilhas: IPlanilhaXlsx[];
@@ -15,6 +16,8 @@ export interface IEscopo {
   inicio: string;
   fim: string;
   op: string;
+  /** o dia conta para o turno? (calendário do painel); sem ele vale domingo/sábado ADM fora */
+  conta?: (d: string, t: Turno) => boolean;
 }
 
 export const idLancamento = (op: string, d: string, g: string): string => `${op}_${d}_${chave(g)}`;
@@ -143,7 +146,7 @@ export function relatorioResumo(docs: ILancamento[], esc: IEscopo, quemLancou: (
   const res: Celula[][] = [];
   dias(esc.inicio, esc.fim).forEach((d) => {
     grp.forEach((o) => {
-      if (!previsto(d, o.t as never)) return;
+      if (!(esc.conta || previsto)(d, o.t as Turno)) return;
       const doc = porId[idLancamento(esc.op, d, o.g)];
       const e = doc && doc.e ? doc.e : {};
       let pr = 0;

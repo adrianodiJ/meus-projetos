@@ -1,24 +1,25 @@
 import * as React from 'react';
 import styles from './QualityPortal.module.scss';
-import { calcular, periodoDoMes, pct, resumoPainel, somar } from '../lib/calculo';
+import { calcular, periodoDoMes, pct, quadroTurnos, resumoPainel, somar } from '../lib/calculo';
 import { fmt, fp, int, num, ordenarPt, unicos } from '../lib/util';
 import { ROTULO_TURNO, TURNOS } from '../models';
 import { Anel, COR_OK, COR_RUIM, GraficoSemanal, Trilha } from './Charts';
+import { Calendario } from './Calendario';
 import type { IDados } from './tipos';
 import { Aviso, BotaoAtualizar, Cartao, Kpi, Pagina } from './ui';
 
 export const Painel: React.FC<{ d: IDados }> = ({ d }) => {
   const meta = d.params.meta;
-  const [ini, fim] = periodoDoMes(d.ym);
+  const [ini, fim] = periodoDoMes(d.ym, d.params);
 
   const controles = (
     <div className={styles.fileira}>
       <label className={styles.campo}>
-        Mês
+        {(d.params.ini || 1) > 1 ? 'Período (mês de início)' : 'Mês'}
         <input type="month" value={d.ym} onChange={(e) => e.target.value && d.setYm(e.target.value)} />
       </label>
       <span className={styles.fileiraNota}>
-        {fmt(ini)} a {fmt(fim)} · meta {fp(meta)} · somente efetivos
+        {fmt(ini)}/{ini.slice(0, 4)} a {fmt(fim)}/{fim.slice(0, 4)} · meta {fp(meta)} · só efetivos · só injustificadas e atestados
       </span>
       <BotaoAtualizar atualizando={d.atualizando} atualizadoEm={d.atualizadoEm} onClick={() => d.recarregar().catch(() => undefined)} />
       {d.pm('exp') && (
@@ -83,6 +84,8 @@ export const Painel: React.FC<{ d: IDados }> = ({ d }) => {
     .slice(0, 10);
 
   const cor = (x: number | null): string => (x !== null && x >= meta ? COR_OK : COR_RUIM);
+  const quadro = quadroTurnos(r, d.ym, d.params);
+  const qt = { pessoas: quadro.reduce((s, x) => s + x.pessoas, 0), total: r.total.p, falta: r.total.f };
 
   return (
     <Pagina titulo="Painel Presenteísmo" subtitulo={`Operação ${d.opNome(d.op)} · cálculo sobre horas previstas x horas de falta`} acoes={controles}>
@@ -95,9 +98,9 @@ export const Painel: React.FC<{ d: IDados }> = ({ d }) => {
             <small>Meta {fp(meta)}</small>
           </div>
         </div>
-        <Kpi valor={num(r.total.p)} legenda="Horas previstas" icone="Clock" cor="#1F6FD1" detalhe="dias com expediente" />
+        <Kpi valor={num(r.total.p)} legenda="Horas previstas" icone="Clock" cor="#1F6FD1" detalhe="dias que contam no calendário" />
         <Kpi valor={num(r.total.f)} legenda="Horas de falta" icone="Warning" cor="#D40511" detalhe={r.total.p ? `${num((r.total.f / r.total.p) * 100)}% das horas previstas` : undefined} />
-        <Kpi valor={int(r.faltasMes.length)} legenda="Faltas no mês" icone="UserRemove" cor="#8C0A12" detalhe="injustificadas + atestados" />
+        <Kpi valor={int(r.faltasMes.length)} legenda="Faltas no período" icone="UserRemove" cor="#8C0A12" detalhe="injustificadas + atestados" />
         <Kpi valor={int(r.rows.length)} legenda="Efetivos" icone="People" cor="#4B5563" detalhe="temporários fora do cálculo" />
       </div>
 
@@ -121,6 +124,64 @@ export const Painel: React.FC<{ d: IDados }> = ({ d }) => {
         </Cartao>
       </div>
 
+      <Cartao titulo="Cálculo do período (como na planilha)">
+        <div className={styles.tabelaRolagem}>
+          <table className={styles.tabelaEsq}>
+            <thead>
+              <tr>
+                <th>Turno</th>
+                <th className={styles.num}>Nº de pessoas</th>
+                <th className={styles.num}>Nº de horas por dia</th>
+                <th className={styles.num}>Dias</th>
+                <th className={styles.num}>Total de horas</th>
+                <th className={styles.num}>Horas de falta</th>
+                <th className={styles.num}>Presenteísmo</th>
+              </tr>
+            </thead>
+            <tbody>
+              {quadro.map((x) => (
+                <tr key={x.t}>
+                  <td>
+                    <b>{ROTULO_TURNO[x.t]}</b>
+                  </td>
+                  <td className={styles.num}>{int(x.pessoas)}</td>
+                  <td className={styles.num}>{num(x.horas)}</td>
+                  <td className={styles.num}>{int(x.dias)}</td>
+                  <td className={styles.num}>{num(x.total)}</td>
+                  <td className={styles.num}>{num(x.falta)}</td>
+                  <td className={styles.num} style={{ color: cor(x.v), fontWeight: 700 }}>
+                    {fp(x.v)}
+                  </td>
+                </tr>
+              ))}
+              <tr>
+                <td>
+                  <b>Geral</b>
+                </td>
+                <td className={styles.num}>
+                  <b>{int(qt.pessoas)}</b>
+                </td>
+                <td />
+                <td />
+                <td className={styles.num}>
+                  <b>{num(qt.total)}</b>
+                </td>
+                <td className={styles.num}>
+                  <b>{num(qt.falta)}</b>
+                </td>
+                <td className={styles.num} style={{ color: cor(v), fontWeight: 700 }}>
+                  {fp(v)}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p className={styles.mudo} style={{ margin: '8px 0 0' }}>
+          Total de horas = pessoas × horas por dia × dias que contam. Horas de falta = (faltas injustificadas + atestados) × horas do turno. Presenteísmo = 1 − horas de falta ÷ total de horas.
+          Temporários e os demais motivos (férias, abono, treinamento…) não entram.
+        </p>
+      </Cartao>
+
       <div className={styles.grade2}>
         <Cartao titulo="Por gestor, do pior para o melhor">
           {gestores.map((x) => (
@@ -136,7 +197,7 @@ export const Painel: React.FC<{ d: IDados }> = ({ d }) => {
         </Cartao>
         {d.pm('top') && (
           <Cartao titulo="Top 10 ofensores">
-            {top.length === 0 && <p className={styles.mudo}>Nenhuma falta lançada neste mês.</p>}
+            {top.length === 0 && <p className={styles.mudo}>Nenhuma falta lançada neste período.</p>}
             {top.map((o, i) => {
               const x = r.ix[o.u];
               return (
@@ -156,11 +217,13 @@ export const Painel: React.FC<{ d: IDados }> = ({ d }) => {
               );
             })}
             <p className={styles.mudo} style={{ margin: '8px 0 0' }}>
-              Faltas injustificadas e atestados no mês; só dias com expediente.
+              Faltas injustificadas e atestados no período; só dias que contam no calendário.
             </p>
           </Cartao>
         )}
       </div>
+
+      <Calendario d={d} />
     </Pagina>
   );
 };

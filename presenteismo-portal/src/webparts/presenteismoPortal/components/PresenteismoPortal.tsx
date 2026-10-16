@@ -23,6 +23,7 @@ import {
 } from '../models';
 import { calcularAcesso } from '../lib/acesso';
 import { periodoDoMes } from '../lib/calculo';
+import { inicioPeriodo, periodoDaData } from '../lib/calendario';
 import { chave, int, iso } from '../lib/util';
 import { Acompanhamento } from './Acompanhamento';
 import { Administracao } from './Administracao';
@@ -108,6 +109,8 @@ export default function PresenteismoPortal(props: IPortalProps): JSX.Element {
 
   const botaoUsuario = React.useRef<HTMLButtonElement>(null);
   const reqRef = React.useRef(0);
+  /** o período inicial segue o dia de início da folha ponto (ajustado uma vez, na primeira carga) */
+  const ymAjustado = React.useRef(false);
 
   // ------------------------------------------------------------ usuário efetivo
   const acesso = React.useMemo(
@@ -163,10 +166,25 @@ export default function PresenteismoPortal(props: IPortalProps): JSX.Element {
         const ac = calcularAcesso(email, usuario.nome, props.adminEmail, dono, us || [], listaG);
         const liberadas = ac.ops ? lista.filter((o) => ac.ops!.indexOf(o.id) >= 0) : lista;
         const opAtual = liberadas.some((o) => o.id === op) ? op : liberadas.length ? liberadas[0].id : ac.ops && ac.ops.length ? ac.ops[0] : lista[0].id;
-        const [ini, fim] = periodoDoMes(ym);
-        const [hcD, parD, absD, mes, dia] = await Promise.all([
+        // parâmetros antes dos lançamentos: o período depende do dia de início da folha ponto
+        const parD = await servicos.dados.ler<IParametros>(`cfg/params_${opAtual}`);
+        const par: IParametros = {
+          h: { ...PARAMETROS_PADRAO.h, ...((parD && parD.h) || {}) },
+          meta: parD && parD.meta ? parD.meta : PARAMETROS_PADRAO.meta,
+          ini: parD && parD.ini ? parD.ini : 1,
+          aj: (parD && parD.aj) || {}
+        };
+        if (!ymAjustado.current) {
+          ymAjustado.current = true;
+          const atual = periodoDaData(new Date(), inicioPeriodo(par));
+          if (atual !== ym) {
+            setYm(atual);
+            return;
+          }
+        }
+        const [ini, fim] = periodoDoMes(ym, par);
+        const [hcD, absD, mes, dia] = await Promise.all([
           servicos.dados.ler<IHeadcount>(`hc/${opAtual}`),
-          servicos.dados.ler<IParametros>(`cfg/params_${opAtual}`),
           servicos.dados.ler<IAbs>(`cfg/abs_${opAtual}`),
           servicos.lancamentos.periodo(opAtual, ini, fim),
           servicos.lancamentos.periodo(opAtual, ldate, ldate)
@@ -181,7 +199,7 @@ export default function PresenteismoPortal(props: IPortalProps): JSX.Element {
         setOperacoes(lista);
         if (opAtual !== op) setOpEstado(opAtual);
         setHc(hcD && Array.isArray(hcD.rows) ? hcD : { rows: [] });
-        setParams({ h: { ...PARAMETROS_PADRAO.h, ...((parD && parD.h) || {}) }, meta: parD && parD.meta ? parD.meta : PARAMETROS_PADRAO.meta });
+        setParams(par);
         setAbsExiste(!!absD);
         setAbs({ ...ABS_PADRAO, ...(absD || {}) });
         setLancMes(mes);

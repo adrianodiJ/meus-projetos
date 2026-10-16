@@ -30,9 +30,10 @@ export const Administracao: React.FC<{ d: IDados; listasOk: boolean }> = ({ d, l
   };
 
   // ---------------------------------------------------------------- parâmetros e operações
-  const salvarParametros = (h: Record<string, number>, meta: number, detalhe: string): void => {
+  const salvarParametros = (h: Record<string, number>, meta: number, detalhe: string, ini?: number): void => {
     d.gravar(async () => {
-      await d.servicos.dados.gravar(`cfg/params_${d.op}`, { h, meta });
+      // mantém o calendário (ajustes de dias) e o início do período já gravados
+      await d.servicos.dados.gravar(`cfg/params_${d.op}`, { ...d.params, h, meta, ini: ini === undefined ? d.params.ini : ini });
       d.registrar('parâmetro', detalhe);
     }, 'Parâmetro salvo.').catch(() => undefined);
   };
@@ -172,7 +173,26 @@ export const Administracao: React.FC<{ d: IDados; listasOk: boolean }> = ({ d, l
                   }}
                 />
               </label>
+              <label className={styles.campo}>
+                Início do período (dia da folha ponto)
+                <input
+                  key={`ini${d.params.ini || 1}`}
+                  type="number"
+                  step="1"
+                  min="1"
+                  max="28"
+                  defaultValue={d.params.ini || 1}
+                  onBlur={(e) => {
+                    const v = Math.round(Number(e.target.value));
+                    if (isNaN(v) || v < 1 || v > 28 || v === (d.params.ini || 1)) return;
+                    salvarParametros(d.params.h, d.params.meta, `início do período = dia ${v}`, v);
+                  }}
+                />
+              </label>
             </div>
+            <p className={styles.mudo} style={{ margin: '10px 0 0' }}>
+              Início do período: 1 = mês-calendário; 13 = de 13 a 12 do mês seguinte (folha ponto). Os dias que contam (sábados, feriados) ficam no calendário do Painel.
+            </p>
           </Cartao>
 
           {d.hc.rows.length > 0 && (
