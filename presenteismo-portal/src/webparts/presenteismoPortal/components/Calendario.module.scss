@@ -1,0 +1,525 @@
+@use 'sass:color';
+
+$amarelo: #ffcc00;
+$vermelho: #d40511;
+$escuro: #1d1f23;
+$escuro2: #2a2d33;
+$texto: #1f2328;
+$suave: #616a75;
+$borda: #e4e7eb;
+$fundo: #f6f7f9;
+$verde: #1e9e3e;
+$laranja: #f28c00;
+$fonte: 'Segoe UI', 'Segoe UI Web (West European)', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+
+// ---------------------------------------------------------------- botão do topo do painel
+.abrir {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid $escuro;
+  background: $escuro;
+  color: #fff;
+  font: 600 13px $fonte;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+
+  i {
+    color: $amarelo;
+    font-size: 15px;
+  }
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(29, 31, 35, 0.25);
+  }
+}
+
+.abrirSelo {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background: $amarelo;
+  color: $escuro;
+  font-size: 11px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+// ---------------------------------------------------------------- janela
+.janela {
+  width: min(1040px, 96vw);
+  max-height: 94vh;
+  border-radius: 18px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  font-family: $fonte;
+  color: $texto;
+  background: $fundo;
+}
+
+.topo {
+  position: relative;
+  background: linear-gradient(120deg, $escuro 0%, $escuro2 70%, #3a2f12 100%);
+  color: #fff;
+  padding: 20px 24px 18px 28px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 6px;
+    background: $amarelo;
+  }
+}
+
+.topoIcone {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  background: $amarelo;
+  color: $escuro;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex: none;
+}
+
+.topoTexto {
+  flex: 1;
+  min-width: 0;
+
+  small {
+    display: block;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 10.5px;
+    font-weight: 700;
+    color: $amarelo;
+  }
+
+  h2 {
+    margin: 2px 0 0;
+    font-size: 20px;
+    font-weight: 700;
+    color: #fff;
+  }
+
+  span {
+    font-size: 12.5px;
+    color: rgba(255, 255, 255, 0.72);
+  }
+}
+
+.navegar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
+  padding: 4px;
+
+  b {
+    min-width: 140px;
+    text-align: center;
+    font-size: 13.5px;
+    text-transform: capitalize;
+  }
+
+  button {
+    width: 32px;
+    height: 32px;
+    border: 0;
+    border-radius: 9px;
+    background: transparent;
+    color: #fff;
+    cursor: pointer;
+    font-size: 12px;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.14);
+    }
+  }
+}
+
+.fechar {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 0;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  cursor: pointer;
+  font-size: 13px;
+
+  &:hover {
+    background: $vermelho;
+  }
+}
+
+.corpo {
+  padding: 18px 24px 8px;
+  overflow: auto;
+  flex: 1;
+}
+
+// ---------------------------------------------------------------- resumo por turno
+.resumo {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(0, 1.3fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.turno {
+  background: #fff;
+  border: 1px solid $borda;
+  border-radius: 14px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.turnoNumero {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: rgba($verde, 0.1);
+  color: $verde;
+  font-size: 22px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+
+.turnoTexto {
+  min-width: 0;
+
+  b {
+    display: block;
+    font-size: 13.5px;
+  }
+
+  span {
+    font-size: 11.5px;
+    color: $suave;
+  }
+}
+
+.regra {
+  background: #fff8db;
+  border: 1px solid #f5e3a1;
+  border-radius: 14px;
+  padding: 10px 14px;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: #5c4a06;
+
+  b {
+    display: block;
+    font-size: 12px;
+    margin-bottom: 2px;
+    color: #3d3104;
+  }
+}
+
+.legenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 0 0 10px;
+  font-size: 11.5px;
+  color: $suave;
+
+  span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  i {
+    width: 12px;
+    height: 12px;
+    border-radius: 4px;
+    display: inline-block;
+  }
+}
+
+.marcaConta {
+  background: $verde;
+}
+
+.marcaNao {
+  background: #fff;
+  border: 1.5px solid #cfd4db;
+}
+
+.marcaAjuste {
+  background: $laranja;
+  border-radius: 50% !important;
+  width: 8px !important;
+  height: 8px !important;
+}
+
+.marcaHoje {
+  border: 2px solid $amarelo;
+}
+
+// ---------------------------------------------------------------- grade
+.rolagem {
+  overflow-x: auto;
+  padding-bottom: 6px;
+}
+
+.grade {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(100px, 1fr));
+  gap: 8px;
+  min-width: 740px;
+}
+
+.diaSemana {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: $suave;
+  padding: 2px 0 4px;
+}
+
+.fimDeSemana {
+  color: #a0a7b1;
+}
+
+.dia {
+  position: relative;
+  background: #fff;
+  border: 1px solid $borda;
+  border-radius: 12px;
+  padding: 8px 8px 9px;
+  transition: box-shadow 0.12s ease, transform 0.12s ease;
+
+  &:hover {
+    box-shadow: 0 6px 16px rgba(16, 24, 40, 0.08);
+  }
+}
+
+.diaFolga {
+  background: repeating-linear-gradient(-45deg, #f6f7f9, #f6f7f9 6px, #eef0f3 6px, #eef0f3 12px);
+  border-style: dashed;
+}
+
+.diaHoje {
+  border: 2px solid $amarelo;
+  box-shadow: 0 0 0 3px rgba($amarelo, 0.25);
+}
+
+.diaTopo {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 7px;
+}
+
+.diaNumero {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: 800 18px $fonte;
+  color: $texto;
+  line-height: 1;
+  cursor: pointer;
+
+  &:disabled {
+    cursor: default;
+  }
+}
+
+.diaNumeroFolga {
+  color: #a0a7b1;
+}
+
+.diaMes {
+  font-size: 10.5px;
+  color: $suave;
+  font-weight: 600;
+}
+
+.pilulas {
+  display: flex;
+  gap: 4px;
+}
+
+.pilula {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  height: 24px;
+  padding: 0;
+  border-radius: 7px;
+  font: 700 10px $fonte;
+  letter-spacing: -0.02em;
+  cursor: pointer;
+  border: 1.5px solid #cfd4db;
+  background: #fff;
+  color: #9aa1ab;
+  text-decoration: line-through;
+  transition: background 0.12s ease, transform 0.08s ease;
+
+  &:hover:not(:disabled) {
+    transform: scale(1.05);
+  }
+
+  &:disabled {
+    cursor: default;
+  }
+}
+
+.pilulaOn {
+  background: $verde;
+  border-color: $verde;
+  color: #fff;
+  text-decoration: none;
+}
+
+.pilulaAjuste::after {
+  content: '';
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: $laranja;
+  border: 2px solid #fff;
+}
+
+// ---------------------------------------------------------------- rodapé
+.rodape {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 24px;
+  background: #fff;
+  border-top: 1px solid $borda;
+}
+
+.rodapeTexto {
+  flex: 1;
+  font-size: 12.5px;
+  color: $suave;
+}
+
+.pendente {
+  color: #b45309;
+  font-weight: 700;
+}
+
+.botao {
+  height: 38px;
+  padding: 0 16px;
+  border-radius: 10px;
+  border: 1px solid #c9ced6;
+  background: #fff;
+  font: 600 13px $fonte;
+  color: $texto;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: #f3f4f6;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+}
+
+.salvar {
+  @extend .botao;
+  background: $amarelo;
+  border-color: $amarelo;
+  font-weight: 800;
+
+  &:hover:not(:disabled) {
+    background: color.adjust($amarelo, $lightness: -6%);
+  }
+}
+
+@media (max-width: 760px) {
+  .janela {
+    width: 100vw;
+    max-height: 100vh;
+    height: 100vh;
+    border-radius: 0;
+  }
+
+  .resumo {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .turno {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    padding: 10px;
+  }
+
+  .turnoNumero {
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+  }
+
+  .grade {
+    grid-template-columns: repeat(7, minmax(104px, 1fr));
+    min-width: 760px;
+  }
+
+  .regra {
+    grid-column: 1 / -1;
+  }
+
+  .topo {
+    flex-wrap: wrap;
+    padding: 16px 16px 14px 22px;
+  }
+
+  .navegar {
+    order: 3;
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .corpo {
+    padding: 14px 14px 6px;
+  }
+
+  .rodape {
+    flex-wrap: wrap;
+    padding: 12px 14px;
+  }
+
+  .rodapeTexto {
+    flex-basis: 100%;
+  }
+}

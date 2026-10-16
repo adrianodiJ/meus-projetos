@@ -4,7 +4,7 @@ import { calcular, periodoDoMes, pct, quadroTurnos, resumoPainel, somar } from '
 import { fmt, fp, int, num, ordenarPt, unicos } from '../lib/util';
 import { ROTULO_TURNO, TURNOS } from '../models';
 import { Anel, COR_OK, COR_RUIM, GraficoSemanal, Trilha } from './Charts';
-import { Calendario } from './Calendario';
+import { BotaoCalendario } from './Calendario';
 import type { IDados } from './tipos';
 import { Aviso, BotaoAtualizar, Cartao, Kpi, Pagina } from './ui';
 
@@ -21,6 +21,7 @@ export const Painel: React.FC<{ d: IDados }> = ({ d }) => {
       <span className={styles.fileiraNota}>
         {fmt(ini)}/{ini.slice(0, 4)} a {fmt(fim)}/{fim.slice(0, 4)} · meta {fp(meta)} · só efetivos · só injustificadas e atestados
       </span>
+      <BotaoCalendario d={d} />
       <BotaoAtualizar atualizando={d.atualizando} atualizadoEm={d.atualizadoEm} onClick={() => d.recarregar().catch(() => undefined)} />
       {d.pm('exp') && (
         <button type="button" className={styles.botaoAmarelo} onClick={() => d.irPara('relatorios')}>
@@ -223,7 +224,6 @@ export const Painel: React.FC<{ d: IDados }> = ({ d }) => {
         )}
       </div>
 
-      <Calendario d={d} />
     </Pagina>
   );
 };
