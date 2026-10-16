@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { ContextualMenu, DirectionalHint, Icon, initializeIcons, MessageBar, MessageBarType, Panel, PanelType, Spinner, SpinnerSize } from '@fluentui/react';
 import styles from './QualityPortal.module.scss';
+import { ICONE_TEAMPULSE } from '../assets/icone';
 import { LOGO_DHL } from '../assets/logo';
 import {
   ABS_PADRAO,
@@ -260,6 +261,22 @@ export default function PresenteismoPortal(props: IPortalProps): JSX.Element {
     if (livre) trocarOp(livre.id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fase, op, operacoes, podeOperacao]);
+
+  // ícone do TeamPulse na aba do navegador enquanto o portal está aberto (volta o do site ao sair)
+  React.useEffect(() => {
+    const antigos = Array.prototype.slice.call(document.querySelectorAll('link[rel~="icon"]')) as HTMLLinkElement[];
+    const guardados = antigos.map((l) => ({ l, href: l.href }));
+    antigos.forEach((l) => (l.href = ICONE_TEAMPULSE));
+    const novo = document.createElement('link');
+    novo.rel = 'icon';
+    novo.type = 'image/svg+xml';
+    novo.href = ICONE_TEAMPULSE;
+    document.head.appendChild(novo);
+    return () => {
+      document.head.removeChild(novo);
+      guardados.forEach((x) => (x.l.href = x.href));
+    };
+  }, []);
 
   const telaCheia = !props.modoEdicao && !admin;
   React.useEffect(() => {

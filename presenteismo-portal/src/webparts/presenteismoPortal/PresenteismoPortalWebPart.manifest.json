@@ -18,7 +18,7 @@
     "group": { "default": "Advanced" },
     "title": { "default": "TeamPulse" },
     "description": { "default": "Lançamento de presença, painel de presenteísmo, acompanhamento e relatórios" },
-    "officeFabricIconFontName": "CheckList",
+    "iconImageUrl": "data:image/svg+xml,<svg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'><rect%20width='64'%20height='64'%20rx='14'%20fill='%23FFCC00'/><polyline%20points='7,35%2019,35%2024,25%2030,46%2037,15%2043,35%2057,35'%20fill='none'%20stroke='%23D40511'%20stroke-width='6'%20stroke-linecap='round'%20stroke-linejoin='round'/><circle%20cx='57'%20cy='35'%20r='4.5'%20fill='%231D1F23'/></svg>",
     "properties": {
       "titulo": "TeamPulse",
       "frase": "Presença hoje. Resultado sempre.",

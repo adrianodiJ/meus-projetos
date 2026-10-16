@@ -39,6 +39,12 @@ O pacote sai em `sharepoint/solution/presenteismo-portal.sppkg`
 
 > Atualizando de uma versão anterior: rode **Administração → Conferir listas e colunas** uma vez (cria a coluna `Tipo` em `PRES_Pedidos`).
 
+## Ícone
+
+`icone/` tem o ícone do TeamPulse (SVG, PNG 32/180/512 e ICO). O portal já troca o ícone da aba do navegador
+enquanto está aberto e usa o mesmo ícone na lista de web parts. Para o site inteiro, use o PNG 512 em
+**Configurações → Alterar a aparência → Cabeçalho → Logotipo do site** e o `.ico` no ícone do site (favicon).
+
 ## Acessos
 
 - **Todos** que abrem o portal veem os indicadores (Home, Painel, Acompanhamento). Não há mais cadastro manual de coordenador, supervisor ou gerente.
