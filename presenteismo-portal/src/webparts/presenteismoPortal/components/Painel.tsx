@@ -1,6 +1,6 @@
 import * as React from 'react';
 import styles from './QualityPortal.module.scss';
-import { calcular, periodoDoMes, pct, quadroTurnos, resumoPainel, somar } from '../lib/calculo';
+import { calcular, periodoDoMes, pct, resumoPainel, somar } from '../lib/calculo';
 import { fmt, fp, int, num, ordenarPt, unicos } from '../lib/util';
 import { ROTULO_TURNO, TURNOS } from '../models';
 import { Anel, COR_OK, COR_RUIM, GraficoSemanal, Trilha } from './Charts';
@@ -85,8 +85,6 @@ export const Painel: React.FC<{ d: IDados }> = ({ d }) => {
     .slice(0, 10);
 
   const cor = (x: number | null): string => (x !== null && x >= meta ? COR_OK : COR_RUIM);
-  const quadro = quadroTurnos(r, d.ym, d.params);
-  const qt = { pessoas: quadro.reduce((s, x) => s + x.pessoas, 0), total: r.total.p, falta: r.total.f };
 
   return (
     <Pagina titulo="Painel Presenteísmo" subtitulo={`Operação ${d.opNome(d.op)} · cálculo sobre horas previstas x horas de falta`} acoes={controles}>
@@ -124,64 +122,6 @@ export const Painel: React.FC<{ d: IDados }> = ({ d }) => {
           ))}
         </Cartao>
       </div>
-
-      <Cartao titulo="Cálculo do período (como na planilha)">
-        <div className={styles.tabelaRolagem}>
-          <table className={styles.tabelaEsq}>
-            <thead>
-              <tr>
-                <th>Turno</th>
-                <th className={styles.num}>Nº de pessoas</th>
-                <th className={styles.num}>Nº de horas por dia</th>
-                <th className={styles.num}>Dias</th>
-                <th className={styles.num}>Total de horas</th>
-                <th className={styles.num}>Horas de falta</th>
-                <th className={styles.num}>Presenteísmo</th>
-              </tr>
-            </thead>
-            <tbody>
-              {quadro.map((x) => (
-                <tr key={x.t}>
-                  <td>
-                    <b>{ROTULO_TURNO[x.t]}</b>
-                  </td>
-                  <td className={styles.num}>{int(x.pessoas)}</td>
-                  <td className={styles.num}>{num(x.horas)}</td>
-                  <td className={styles.num}>{int(x.dias)}</td>
-                  <td className={styles.num}>{num(x.total)}</td>
-                  <td className={styles.num}>{num(x.falta)}</td>
-                  <td className={styles.num} style={{ color: cor(x.v), fontWeight: 700 }}>
-                    {fp(x.v)}
-                  </td>
-                </tr>
-              ))}
-              <tr>
-                <td>
-                  <b>Geral</b>
-                </td>
-                <td className={styles.num}>
-                  <b>{int(qt.pessoas)}</b>
-                </td>
-                <td />
-                <td />
-                <td className={styles.num}>
-                  <b>{num(qt.total)}</b>
-                </td>
-                <td className={styles.num}>
-                  <b>{num(qt.falta)}</b>
-                </td>
-                <td className={styles.num} style={{ color: cor(v), fontWeight: 700 }}>
-                  {fp(v)}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <p className={styles.mudo} style={{ margin: '8px 0 0' }}>
-          Total de horas = pessoas × horas por dia × dias que contam. Horas de falta = (faltas injustificadas + atestados) × horas do turno. Presenteísmo = 1 − horas de falta ÷ total de horas.
-          Temporários e os demais motivos (férias, abono, treinamento…) não entram.
-        </p>
-      </Cartao>
 
       <div className={styles.grade2}>
         <Cartao titulo="Top ofensores por gestão">

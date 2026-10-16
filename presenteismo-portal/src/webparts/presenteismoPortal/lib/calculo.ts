@@ -1,5 +1,5 @@
 import type { IColab, ILancamento, IParametros, Turno } from '../models';
-import { MOTIVOS_FALTA, TURNOS } from '../models';
+import { MOTIVOS_FALTA } from '../models';
 import { inicioPeriodo, mapaDias, periodo } from './calendario';
 import { dias, dt, ehTemp, semana } from './util';
 
@@ -102,28 +102,6 @@ export function resumoPainel(equipe: IColab[], lancs: ILancamento[], ym: string,
   rows.forEach((r) => (ix[r.u] = r));
   const faltasMes = fl.filter((f) => ix[f.u] && f.d >= ini && f.d <= fim && previsto(f.d, ix[f.u].t));
   return { rows, res, total, v: pct(total.p, total.f), faltasMes, ix };
-}
-
-/** Quadro igual ao da planilha: por turno, pessoas × horas por dia × dias = total de horas. */
-export interface ILinhaTurno {
-  t: Turno;
-  pessoas: number;
-  horas: number;
-  dias: number;
-  total: number;
-  falta: number;
-  v: number | null;
-}
-
-export function quadroTurnos(r: IResumoPainel, ym: string, par: IParametros): ILinhaTurno[] {
-  const [ini, fim] = periodoDoMes(ym, par);
-  const conta = mapaDias(ini, fim, par.aj);
-  return TURNOS.map((t) => {
-    const pessoas = r.rows.filter((x) => x.t === t).length;
-    const n = dias(ini, fim).filter((d) => conta[d] && conta[d][t]).length;
-    const s = somar(r.res.filter((o) => o.t === t));
-    return { t, pessoas, horas: horasDoTurno(par, t), dias: n, total: s.p, falta: s.f, v: pct(s.p, s.f) };
-  });
 }
 
 export { dt };
