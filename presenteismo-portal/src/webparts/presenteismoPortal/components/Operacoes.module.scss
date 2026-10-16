@@ -1,0 +1,342 @@
+@use 'sass:color';
+
+$amarelo: #ffcc00;
+$vermelho: #d40511;
+$escuro: #1d1f23;
+$texto: #1f2328;
+$suave: #616a75;
+$borda: #e4e7eb;
+$fonte: 'Segoe UI', 'Segoe UI Web (West European)', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+
+// ---------------------------------------------------------------- chip do topo (abre a janela)
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  height: 46px;
+  padding: 0 12px 0 6px;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  flex-shrink: 0;
+  font: inherit;
+  color: $texto;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s ease, box-shadow 0.12s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+}
+
+.chipLogo {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: $vermelho;
+  color: #fff;
+  font-size: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background: #fff;
+    padding: 3px;
+  }
+}
+
+.chipTexto {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+
+  small {
+    font-size: 10.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #4a4a4a;
+  }
+
+  b {
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+
+    i {
+      font-size: 10px;
+      color: #4a4a4a;
+    }
+  }
+}
+
+.chipInfo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.15;
+  padding-left: 12px;
+  border-left: 1px solid rgba(0, 0, 0, 0.15);
+
+  b {
+    font-size: 15px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  small {
+    font-size: 10.5px;
+    color: #4a4a4a;
+  }
+}
+
+// ---------------------------------------------------------------- janela
+.janela {
+  width: min(1080px, 96vw);
+  max-height: 92vh;
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  font-family: $fonte;
+  color: $texto;
+  background: #fff;
+}
+
+.topo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 24px;
+  border-bottom: 1px solid $borda;
+
+  h2 {
+    flex: 1;
+    margin: 0;
+    font-size: 24px;
+    font-weight: 700;
+    color: $texto;
+  }
+}
+
+.confirmar {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 18px;
+  border-radius: 10px;
+  border: 1px solid $amarelo;
+  background: $amarelo;
+  color: $escuro;
+  font: 700 14px $fonte;
+  cursor: pointer;
+  transition: background 0.12s ease;
+
+  &:hover:not(:disabled) {
+    background: color.adjust($amarelo, $lightness: -6%);
+  }
+
+  &:disabled {
+    background: #eef0f3;
+    border-color: #e1e4e9;
+    color: #9aa1ab;
+    cursor: default;
+  }
+}
+
+.fechar {
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #4a4f57;
+  font-size: 16px;
+  cursor: pointer;
+
+  &:hover {
+    background: #f3f4f6;
+  }
+}
+
+.corpo {
+  padding: 22px 24px 26px;
+  overflow: auto;
+}
+
+.dica {
+  margin: 0 0 16px;
+  font-size: 13px;
+  color: $suave;
+}
+
+.grade {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 16px;
+}
+
+.cartao {
+  position: relative;
+  min-height: 168px;
+  border: 1px solid $borda;
+  border-radius: 14px;
+  background: #fff;
+  padding: 22px 16px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  font: inherit;
+  color: $texto;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
+  transition: box-shadow 0.15s ease, transform 0.15s ease, border-color 0.15s ease;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px rgba(16, 24, 40, 0.1);
+  }
+}
+
+.cartaoAtual {
+  background: #f3f4f6;
+  cursor: default;
+
+  .nome {
+    color: #9aa1ab;
+  }
+
+  .logo img {
+    filter: grayscale(1);
+    opacity: 0.55;
+  }
+
+  &:hover:not(:disabled) {
+    transform: none;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
+  }
+}
+
+.cartaoEscolhido {
+  border: 2px solid $amarelo;
+  box-shadow: 0 0 0 4px rgba($amarelo, 0.25);
+}
+
+.cartaoBloqueado {
+  background: #fafafb;
+
+  .logo,
+  .nome {
+    opacity: 0.45;
+  }
+}
+
+.logo {
+  height: 64px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  img {
+    max-height: 56px;
+    max-width: 150px;
+    object-fit: contain;
+  }
+}
+
+.monograma {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: #fff;
+}
+
+.nome {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.qtd {
+  margin-top: -8px;
+  font-size: 12px;
+  color: $suave;
+}
+
+.selo {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  background: #e5e7eb;
+  color: #4b5563;
+}
+
+.seloEscolhido {
+  background: $amarelo;
+  color: $escuro;
+}
+
+.seloBloqueado {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #fff;
+  border: 1px solid $borda;
+  color: $suave;
+}
+
+@media (max-width: 640px) {
+  .topo {
+    padding: 14px 16px;
+
+    h2 {
+      font-size: 19px;
+    }
+  }
+
+  .confirmar {
+    padding: 0 12px;
+    font-size: 13px;
+  }
+
+  .corpo {
+    padding: 16px;
+  }
+
+  .grade {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .cartao {
+    min-height: 140px;
+    padding: 18px 10px 14px;
+  }
+}

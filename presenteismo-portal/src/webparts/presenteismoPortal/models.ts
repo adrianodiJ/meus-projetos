@@ -40,6 +40,10 @@ export const OPERACAO_PADRAO: IOperacao = { id: 'fisia', nome: 'FISIA' };
 export interface IOperacao {
   id: string;
   nome: string;
+  /** código do HUB/conta (opcional), exibido como "FISIA | 2" */
+  codigo?: string;
+  /** logo da operação (imagem reduzida, em data URL), enviado pelo administrador */
+  logo?: string;
 }
 
 /** Colaborador do headcount. */

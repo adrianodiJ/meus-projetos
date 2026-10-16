@@ -2,8 +2,9 @@ import * as React from 'react';
 import { Icon } from '@fluentui/react';
 import styles from './QualityPortal.module.scss';
 import { chave, dataHora, ordenarPt, unicos } from '../lib/util';
-import { type IAbs, ROTULO_TURNO, TURNOS } from '../models';
+import { type IAbs, type IOperacao, ROTULO_TURNO, TURNOS } from '../models';
 import { provisionarListas } from '../services/Provisionamento';
+import { LogoOperacao } from './SeletorOperacao';
 import type { IDados } from './tipos';
 import { Cartao, Pagina } from './ui';
 
@@ -53,6 +54,44 @@ export const Administracao: React.FC<{ d: IDados; listasOk: boolean }> = ({ d, l
       await d.servicos.dados.gravar('cfg/ops', { list: [...d.operacoes, { id, nome }] });
       d.registrar('operação', `adicionou ${nome}`);
     }, 'Operação adicionada. Selecione-a na barra superior e importe o headcount dela.').then((ok) => ok && setNovaOp('')).catch(() => undefined);
+  };
+
+  // logo: a imagem é reduzida no navegador (máx. 320×120) e guardada junto da operação (cfg/ops)
+  const salvarOps = (lista: IOperacao[], detalhe: string, ok: string): void => {
+    d.gravar(async () => {
+      await d.servicos.dados.gravar('cfg/ops', { list: lista });
+      d.registrar('operação', detalhe);
+    }, ok).catch(() => undefined);
+  };
+  const alterarOp = (id: string, campos: Partial<IOperacao>, detalhe: string, ok: string): void =>
+    salvarOps(
+      d.operacoes.map((o) => (o.id === id ? { ...o, ...campos } : o)),
+      detalhe,
+      ok
+    );
+  const enviarLogo = (o: IOperacao, arquivo: File | undefined): void => {
+    if (!arquivo) return;
+    if (!/^image\//.test(arquivo.type)) {
+      d.avisar('erro', 'Envie uma imagem (PNG, JPG ou SVG).');
+      return;
+    }
+    const leitor = new FileReader();
+    leitor.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const escala = Math.min(1, 320 / img.width, 120 / img.height);
+        const c = document.createElement('canvas');
+        c.width = Math.max(1, Math.round(img.width * escala));
+        c.height = Math.max(1, Math.round(img.height * escala));
+        const ctx = c.getContext('2d');
+        if (!ctx) return;
+        ctx.drawImage(img, 0, 0, c.width, c.height);
+        alterarOp(o.id, { logo: c.toDataURL('image/png') }, `logo de ${o.nome}`, `Logo de ${o.nome} salvo.`);
+      };
+      img.onerror = () => d.avisar('erro', 'Não foi possível ler a imagem.');
+      img.src = String(leitor.result);
+    };
+    leitor.readAsDataURL(arquivo);
   };
 
   // ---------------------------------------------------------------- cadastro ABS
@@ -125,8 +164,70 @@ export const Administracao: React.FC<{ d: IDados; listasOk: boolean }> = ({ d, l
 
           <Cartao titulo="Operações">
             <p className={styles.mudo} style={{ margin: '0 0 10px' }}>
-              Cada operação tem o próprio headcount, parâmetros e lançamentos. Atual: <b>{d.opNome(d.op)}</b>. Existentes: {d.operacoes.map((o) => o.nome).join(', ')}.
+              Cada operação tem o próprio headcount, parâmetros e lançamentos. O logo e o código aparecem na janela Alterar operação (clique na operação no topo).
             </p>
+            <div className={styles.tabelaRolagem} style={{ marginBottom: 14 }}>
+              <table className={styles.tabelaEsq}>
+                <thead>
+                  <tr>
+                    <th>Logo</th>
+                    <th>Operação</th>
+                    <th>Código (opcional)</th>
+                    <th>Imagem do logo</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {d.operacoes.map((o) => (
+                    <tr key={o.id}>
+                      <td>
+                        <span style={{ width: 96, height: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                          {o.logo ? <img src={o.logo} alt={o.nome} style={{ maxWidth: 96, maxHeight: 40, objectFit: 'contain' }} /> : <LogoOperacao op={o} />}
+                        </span>
+                      </td>
+                      <td>
+                        <b>{o.nome}</b>
+                        {o.id === d.op && <span className={styles.selo} style={{ marginLeft: 8 }}>ATUAL</span>}
+                      </td>
+                      <td>
+                        <input
+                          key={o.codigo || ''}
+                          type="text"
+                          defaultValue={o.codigo || ''}
+                          placeholder="ex.: 2"
+                          aria-label={`Código de ${o.nome}`}
+                          style={{ width: 90, padding: '6px 8px', border: '1px solid #c9ced6', borderRadius: 6 }}
+                          onBlur={(e) => {
+                            const v = e.target.value.trim();
+                            if (v !== (o.codigo || '')) alterarOp(o.id, { codigo: v || undefined }, `código de ${o.nome} = ${v || '—'}`, 'Código salvo.');
+                          }}
+                        />
+                      </td>
+                      <td>
+                        <div className={styles.fileira} style={{ gap: 8 }}>
+                          <label className={styles.botao} style={{ cursor: 'pointer' }}>
+                            <Icon iconName="Upload" /> {o.logo ? 'Trocar' : 'Enviar'}
+                            <input
+                              type="file"
+                              accept="image/*"
+                              style={{ display: 'none' }}
+                              onChange={(e) => {
+                                enviarLogo(o, e.target.files ? e.target.files[0] : undefined);
+                                e.target.value = '';
+                              }}
+                            />
+                          </label>
+                          {o.logo && (
+                            <button type="button" className={styles.botao} onClick={() => alterarOp(o.id, { logo: undefined }, `removeu o logo de ${o.nome}`, 'Logo removido.')}>
+                              Remover
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
             <div className={styles.fileira}>
               <label className={styles.campo}>
                 Nova operação

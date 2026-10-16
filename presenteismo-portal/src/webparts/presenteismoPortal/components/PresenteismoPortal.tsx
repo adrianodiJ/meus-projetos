@@ -25,7 +25,7 @@ import {
 import { calcularAcesso } from '../lib/acesso';
 import { periodoDoMes } from '../lib/calculo';
 import { inicioPeriodo, periodoDaData } from '../lib/calendario';
-import { chave, int, iso } from '../lib/util';
+import { chave, iso } from '../lib/util';
 import { Acompanhamento } from './Acompanhamento';
 import { Administracao } from './Administracao';
 import { Headcount } from './Headcount';
@@ -34,6 +34,7 @@ import { Lancamento } from './Lancamento';
 import { MeuAcesso } from './MeuAcesso';
 import { Painel } from './Painel';
 import { Relatorios } from './Relatorios';
+import { ChipOperacao, JanelaOperacao } from './SeletorOperacao';
 import { Usuarios } from './Usuarios';
 import { DOC_GESTORES } from '../services/Coordenadores';
 import { type IDados, type IPortalProps, MENU, type Visao } from './tipos';
@@ -105,6 +106,7 @@ export default function PresenteismoPortal(props: IPortalProps): JSX.Element {
   const [menuLateral, setMenuLateral] = React.useState(false);
   const [recolhido, setRecolhido] = React.useState(lerLocal(CHAVE_MENU) === '1');
   const [notifAberto, setNotifAberto] = React.useState(false);
+  const [trocaOp, setTrocaOp] = React.useState(false);
   const [menuUsuario, setMenuUsuario] = React.useState(false);
   const [perfilSp, setPerfilSp] = React.useState<IPerfilSp | undefined>(undefined);
 
@@ -499,32 +501,7 @@ export default function PresenteismoPortal(props: IPortalProps): JSX.Element {
           <b>{props.titulo}</b>
         </button>
         {fase === 'pronto' && opsVisiveis.length > 0 && (
-          <div className={styles.operacao} title="Operação exibida no portal: headcount, lançamentos e indicadores são desta operação">
-            <span className={styles.operacaoIcone}>
-              <Icon iconName="CityNext" />
-            </span>
-            <span className={styles.operacaoTexto}>
-              <small>Operação</small>
-              {opsVisiveis.length > 1 ? (
-                <span className={styles.operacaoSelect}>
-                  <select value={op} onChange={(e) => trocarOp(e.target.value)} aria-label="Operação">
-                    {opsVisiveis.map((o) => (
-                      <option key={o.id} value={o.id}>
-                        {o.nome}
-                      </option>
-                    ))}
-                  </select>
-                  <Icon iconName="ChevronDown" />
-                </span>
-              ) : (
-                <b>{opNome(op)}</b>
-              )}
-            </span>
-            <span className={styles.operacaoInfo}>
-              <b>{int(equipe.length)}</b>
-              <small>colaboradores</small>
-            </span>
-          </div>
+          <ChipOperacao atual={operacoes.filter((o) => o.id === op)[0] || { id: op, nome: opNome(op) }} colaboradores={equipe.length} onAbrir={() => setTrocaOp(true)} />
         )}
 
         <div className={styles.busca}>
@@ -622,6 +599,22 @@ export default function PresenteismoPortal(props: IPortalProps): JSX.Element {
           {conteudo}
         </main>
       </div>
+
+      {trocaOp && (
+        <JanelaOperacao
+          operacoes={operacoes}
+          atual={op}
+          liberada={podeOperacao}
+          colaboradores={(id) => {
+            if (id === op) return hc.rows.length;
+            const g = gestores.filter((x) => x.op === id);
+            return g.length ? g.reduce((t, x) => t + (x.n || 0), 0) : undefined;
+          }}
+          onTrocar={trocarOp}
+          onPedirAcesso={() => irPara('acesso')}
+          onFechar={() => setTrocaOp(false)}
+        />
+      )}
 
       <Panel isOpen={notifAberto} onDismiss={() => setNotifAberto(false)} type={PanelType.smallFixedFar} headerText="Pendências" closeButtonAriaLabel="Fechar">
         <ul className={styles.notifLista}>

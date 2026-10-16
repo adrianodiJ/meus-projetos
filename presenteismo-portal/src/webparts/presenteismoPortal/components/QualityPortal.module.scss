@@ -125,6 +125,13 @@ $fonte: 'Segoe UI', 'Segoe UI Web (West European)', -apple-system, BlinkMacSyste
   }
 }
 
+// em tela larga o nome do portal não encolhe: quem cede espaço é a busca
+@media (min-width: 901px) {
+  .marca {
+    flex-shrink: 0;
+  }
+}
+
 // Operação atual: cartão branco translúcido com ícone, nome e total de colaboradores.
 .operacao {
   display: inline-flex;
