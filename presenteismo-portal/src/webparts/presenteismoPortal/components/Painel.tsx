@@ -184,7 +184,7 @@ export const Painel: React.FC<{ d: IDados }> = ({ d }) => {
       </Cartao>
 
       <div className={styles.grade2}>
-        <Cartao titulo="Por gestor, do pior para o melhor">
+        <Cartao titulo="Top ofensores por gestão">
           {gestores.map((x) => (
             <div key={x.g} className={styles.linhaGestor}>
               <div>
