@@ -2700,3 +2700,92 @@ $alertaTexto: #92400e;
     justify-content: center;
   }
 }
+
+// ---------------------------------------------------------------- notificações (painel lateral "Pendências")
+.notifLista {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-family: $fonte;
+}
+
+.notif {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 12px 12px 14px;
+  border: 1px solid $borda;
+  border-left: 4px solid $amarelo;
+  border-radius: 10px;
+  background: #fff;
+  font: inherit;
+  color: $texto;
+  text-align: left;
+  cursor: pointer;
+  transition: box-shadow 0.12s ease, transform 0.12s ease;
+
+  &:hover {
+    box-shadow: $sombra;
+    transform: translateY(-1px);
+  }
+}
+
+.notifAlerta {
+  border-left-color: $vermelho;
+}
+
+.notifIcone {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  background: rgba($amarelo, 0.22);
+  color: #8a6d00;
+}
+
+.notifAlerta .notifIcone {
+  background: rgba($vermelho, 0.1);
+  color: $vermelho;
+}
+
+.notifTexto {
+  flex: 1;
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+
+  b {
+    display: block;
+    font-size: 13.5px;
+    line-height: 1.3;
+  }
+
+  small {
+    display: block;
+    margin-top: 2px;
+    font-size: 12px;
+    line-height: 1.35;
+    color: $suave;
+  }
+}
+
+.notifSeta {
+  flex: none;
+  color: #9aa1ab;
+  font-size: 12px;
+}
+
+.notifVazio {
+  padding: 18px 4px;
+  color: $suave;
+  font-size: 13px;
+  text-align: center;
+}

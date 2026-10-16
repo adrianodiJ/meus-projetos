@@ -607,19 +607,27 @@ export default function PresenteismoPortal(props: IPortalProps): JSX.Element {
       </div>
 
       <Panel isOpen={notifAberto} onDismiss={() => setNotifAberto(false)} type={PanelType.smallFixedFar} headerText="Pendências" closeButtonAriaLabel="Fechar">
-        <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <ul className={styles.notifLista}>
           {pedidosPendentes > 0 && (
             <li>
               <button
                 type="button"
-                className={styles.botao}
-                style={{ width: '100%', justifyContent: 'flex-start' }}
+                className={styles.notif}
                 onClick={() => {
                   setNotifAberto(false);
                   irPara('usuarios');
                 }}
               >
-                <Icon iconName="AddFriend" /> {pedidosPendentes} pedido{pedidosPendentes > 1 ? 's' : ''} de acesso aguardando aprovação
+                <span className={styles.notifIcone}>
+                  <Icon iconName="AddFriend" />
+                </span>
+                <span className={styles.notifTexto}>
+                  <b>
+                    {pedidosPendentes} pedido{pedidosPendentes > 1 ? 's' : ''} de acesso
+                  </b>
+                  <small>Aguardando aprovação em Usuários e acessos</small>
+                </span>
+                <Icon iconName="ChevronRight" className={styles.notifSeta} />
               </button>
             </li>
           )}
@@ -627,18 +635,28 @@ export default function PresenteismoPortal(props: IPortalProps): JSX.Element {
             <li>
               <button
                 type="button"
-                className={styles.botao}
-                style={{ width: '100%', justifyContent: 'flex-start' }}
+                className={`${styles.notif} ${styles.notifAlerta}`}
                 onClick={() => {
                   setNotifAberto(false);
                   irPara(permitida('acompanhamento') ? 'acompanhamento' : 'lancamento');
                 }}
               >
-                <Icon iconName="Clock" /> {pendenciasDia} equipe{pendenciasDia > 1 ? 's' : ''} sem lançamento completo em {ldate.slice(8)}/{ldate.slice(5, 7)}
+                <span className={styles.notifIcone}>
+                  <Icon iconName="Clock" />
+                </span>
+                <span className={styles.notifTexto}>
+                  <b>
+                    {pendenciasDia} equipe{pendenciasDia > 1 ? 's' : ''} sem lançamento completo
+                  </b>
+                  <small>
+                    Lista de presença de {ldate.slice(8)}/{ldate.slice(5, 7)}/{ldate.slice(0, 4)} · {permitida('acompanhamento') ? 'ver no Acompanhamento' : 'abrir o Lançamento'}
+                  </small>
+                </span>
+                <Icon iconName="ChevronRight" className={styles.notifSeta} />
               </button>
             </li>
           )}
-          {naoLidas === 0 && <li className={styles.suave}>Nenhuma pendência por enquanto.</li>}
+          {naoLidas === 0 && <li className={styles.notifVazio}>Nenhuma pendência por enquanto.</li>}
         </ul>
       </Panel>
     </div>
