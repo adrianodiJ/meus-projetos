@@ -196,7 +196,7 @@ export const Hero: React.FC<{ imagem?: string; frase: string }> = ({ imagem, fra
     <div className={styles.heroSombra} />
     <div className={styles.heroTexto}>
       <small>Bem-vindo ao</small>
-      <h1>Presenteísmo Portal</h1>
+      <h1>TeamPulse</h1>
       <p>Lançamento diário de presença, acompanhamento das equipes e indicadores de presenteísmo por operação.</p>
       <em>“{frase}”</em>
     </div>

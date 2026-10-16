@@ -1,6 +1,6 @@
 define([], function() {
   return {
-    "PropertyPaneDescription": "Presenteismo Portal settings",
+    "PropertyPaneDescription": "TeamPulse settings",
     "ExibicaoGroupName": "Display",
     "TituloLabel": "Title (top bar)",
     "FraseLabel": "Banner quote",

@@ -23,8 +23,8 @@
     },
     "features": [
       {
-        "title": "Presenteismo Portal - Recursos",
-        "description": "Recursos do web part Presenteísmo Portal.",
+        "title": "TeamPulse - Recursos",
+        "description": "Recursos do web part TeamPulse.",
         "id": "c8a2ccb9-995e-4cb2-9004-0458d73121e3",
         "version": "1.0.0.0"
       }
