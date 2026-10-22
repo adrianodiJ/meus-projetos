@@ -175,7 +175,7 @@ export default function PresenteismoPortal(props: IPortalProps): JSX.Element {
           h: { ...PARAMETROS_PADRAO.h, ...((parD && parD.h) || {}) },
           meta: parD && parD.meta ? parD.meta : PARAMETROS_PADRAO.meta,
           ini: parD && parD.ini ? parD.ini : 1,
-          aj: (parD && parD.aj) || {}
+          cal: (parD && parD.cal) || {}
         };
         if (!ymAjustado.current) {
           ymAjustado.current = true;

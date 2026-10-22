@@ -76,8 +76,11 @@ export interface IParametros {
   meta: number;
   /** dia de início do período de apuração (folha ponto); 1 = mês-calendário */
   ini?: number;
-  /** ajustes do calendário: dia → turno → conta ou não conta */
-  aj?: Record<string, Partial<Record<Turno, boolean>>>;
+  /**
+   * dias escolhidos no calendário para o cálculo de cada mês: "2026-10" → dia → turno → conta.
+   * Sem dias escolhidos, o mês não tem horas previstas.
+   */
+  cal?: Record<string, Record<string, Partial<Record<Turno, boolean>>>>;
 }
 
 export const PARAMETROS_PADRAO: IParametros = { h: { ADM: 8.75, PRIMEIRO: 8, SEGUNDO: 8 }, meta: 98 };

@@ -4,7 +4,7 @@ import { calcular, periodoDoMes, pct, resumoPainel, somar } from '../lib/calculo
 import { fmt, fp, int, num, ordenarPt, unicos } from '../lib/util';
 import { ROTULO_TURNO, TURNOS } from '../models';
 import { Anel, COR_OK, COR_RUIM, GraficoSemanal, Trilha } from './Charts';
-import { BotaoCalendario } from './Calendario';
+import { BotaoCalendario, diasNoCalculo } from './Calendario';
 import type { IDados } from './tipos';
 import { Aviso, BotaoAtualizar, Cartao, Kpi, Pagina } from './ui';
 
@@ -15,7 +15,7 @@ export const Painel: React.FC<{ d: IDados }> = ({ d }) => {
   const controles = (
     <div className={styles.fileira}>
       <label className={styles.campo}>
-        {(d.params.ini || 1) > 1 ? 'Período (mês de início)' : 'Mês'}
+        Mês do cálculo
         <input type="month" value={d.ym} onChange={(e) => e.target.value && d.setYm(e.target.value)} />
       </label>
       <span className={styles.fileiraNota}>
@@ -50,9 +50,10 @@ export const Painel: React.FC<{ d: IDados }> = ({ d }) => {
 
   const v = r.v;
   const ok = v !== null && v >= meta;
-  const semanas = unicos(r.res.map((o) => o.w)).sort((a, b) => a - b);
-  const dadosSemana = semanas.map((w) => {
-    const x = r.res.filter((o) => o.w === w);
+  const semanas = unicos(r.res.map((o) => o.s)).sort();
+  const dadosSemana = semanas.map((sem) => {
+    const x = r.res.filter((o) => o.s === sem);
+    const w = x[0].w;
     const s = somar(x);
     return { l: `W${w}`, r: `${fmt(x.map((o) => o.a).sort()[0])}–${fmt(x.map((o) => o.b).sort().pop() as string)}`, v: pct(s.p, s.f) };
   });
@@ -88,6 +89,22 @@ export const Painel: React.FC<{ d: IDados }> = ({ d }) => {
 
   return (
     <Pagina titulo="Painel Presenteísmo" subtitulo={`Operação ${d.opNome(d.op)} · cálculo sobre horas previstas x horas de falta`} acoes={controles}>
+      {diasNoCalculo(d) === 0 && (
+        <Cartao>
+          <div className={styles.fileira} style={{ justifyContent: 'space-between' }}>
+            <span>
+              <b>Nenhum dia escolhido para o cálculo de {d.ym.slice(5)}/{d.ym.slice(0, 4)}.</b>{' '}
+              <span className={styles.mudo}>
+                {d.admin
+                  ? 'Abra o calendário e marque os dias (de qualquer mês) que entram nas horas previstas.'
+                  : 'O administrador ainda não escolheu os dias deste mês no calendário.'}
+              </span>
+            </span>
+            <BotaoCalendario d={d} texto="Escolher dias" />
+          </div>
+        </Cartao>
+      )}
+
       <div className={styles.painelTopo}>
         <div className={styles.indicadorAnel}>
           <Anel valor={v === null ? 0 : v} ok={ok} />
@@ -97,7 +114,7 @@ export const Painel: React.FC<{ d: IDados }> = ({ d }) => {
             <small>Meta {fp(meta)}</small>
           </div>
         </div>
-        <Kpi valor={num(r.total.p)} legenda="Horas previstas" icone="Clock" cor="#1F6FD1" detalhe="dias que contam no calendário" />
+        <Kpi valor={num(r.total.p)} legenda="Horas previstas" icone="Clock" cor="#1F6FD1" detalhe="dias escolhidos no calendário" />
         <Kpi valor={num(r.total.f)} legenda="Horas de falta" icone="Warning" cor="#D40511" detalhe={r.total.p ? `${num((r.total.f / r.total.p) * 100)}% das horas previstas` : undefined} />
         <Kpi valor={int(r.faltasMes.length)} legenda="Faltas no período" icone="UserRemove" cor="#8C0A12" detalhe="injustificadas + atestados" />
         <Kpi valor={int(r.rows.length)} legenda="Efetivos" icone="People" cor="#4B5563" detalhe="temporários fora do cálculo" />

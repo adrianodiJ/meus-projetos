@@ -55,7 +55,8 @@ export const Relatorios: React.FC<{ d: IDados }> = ({ d }) => {
         docs.push(...(await d.servicos.lancamentos.periodo(d.op, s, e)));
         s = iso(new Date(new Date(`${e}T12:00:00`).getTime() + 864e5));
       }
-      const esc = { colabs, inicio: r0, fim, op: d.op, conta: contadorDeDias(d.params) };
+      const temCalendario = !!d.params.cal && Object.keys(d.params.cal).length > 0;
+      const esc = { colabs, inicio: r0, fim, op: d.op, conta: temCalendario ? contadorDeDias(d.params) : undefined };
       const rel = tipo === 'abs' ? relatorioAbs(docs, esc, d.abs, d.nomeDe) : relatorioResumo(docs, esc, d.nomeDe);
       baixarArquivo(gerarXlsx(rel.planilhas), rel.arquivo, TIPO_XLSX);
       d.avisar('ok', rel.mensagem);

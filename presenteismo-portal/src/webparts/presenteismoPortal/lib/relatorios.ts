@@ -16,7 +16,7 @@ export interface IEscopo {
   inicio: string;
   fim: string;
   op: string;
-  /** o dia conta para o turno? (calendário do painel); sem ele vale domingo/sábado ADM fora */
+  /** o dia foi escolhido no calendário de algum mês? Sem ele vale domingo e sábado do ADM fora */
   conta?: (d: string, t: Turno) => boolean;
 }
 
@@ -146,8 +146,9 @@ export function relatorioResumo(docs: ILancamento[], esc: IEscopo, quemLancou: (
   const res: Celula[][] = [];
   dias(esc.inicio, esc.fim).forEach((d) => {
     grp.forEach((o) => {
-      if (!(esc.conta || previsto)(d, o.t as Turno)) return;
+      // entra o dia escolhido no calendário (ou com expediente, sem calendário) e o dia que teve lançamento
       const doc = porId[idLancamento(esc.op, d, o.g)];
+      if (!doc && !(esc.conta || previsto)(d, o.t as Turno)) return;
       const e = doc && doc.e ? doc.e : {};
       let pr = 0;
       let au = 0;

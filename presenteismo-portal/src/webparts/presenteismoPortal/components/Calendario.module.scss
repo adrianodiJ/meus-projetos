@@ -134,10 +134,9 @@ $fonte: 'Segoe UI', 'Segoe UI Web (West European)', -apple-system, BlinkMacSyste
   padding: 4px;
 
   b {
-    min-width: 140px;
+    min-width: 200px;
     text-align: center;
     font-size: 13.5px;
-    text-transform: capitalize;
   }
 
   button {
@@ -662,4 +661,120 @@ $fonte: 'Segoe UI', 'Segoe UI Web (West European)', -apple-system, BlinkMacSyste
     flex-direction: column;
     align-items: flex-start;
   }
+}
+
+// ---------------------------------------------------------------- meses exibidos e dias escolhidos
+.meses {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  margin-bottom: 10px;
+}
+
+.mesesNavegar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  b {
+    min-width: 150px;
+    text-align: center;
+    font-size: 17px;
+    font-weight: 800;
+    text-transform: capitalize;
+  }
+
+  button {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    border: 1px solid #cfd4db;
+    background: #fff;
+    cursor: pointer;
+    font-size: 12px;
+
+    &:hover {
+      border-color: $escuro;
+      background: #fff8db;
+    }
+  }
+}
+
+.mesesAtalhos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+
+  span {
+    font-size: 12px;
+    color: $suave;
+    margin-right: 2px;
+  }
+
+  button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 28px;
+    padding: 0 6px 0 10px;
+    border-radius: 999px;
+    border: 1px solid #cfd4db;
+    background: #fff;
+    font: 600 12px $fonte;
+    color: $texto;
+    cursor: pointer;
+
+    i {
+      font-style: normal;
+      min-width: 20px;
+      height: 20px;
+      padding: 0 5px;
+      border-radius: 999px;
+      background: #eef0f3;
+      font-size: 11px;
+      font-weight: 800;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+}
+
+.mesAtivo {
+  background: $escuro !important;
+  border-color: $escuro !important;
+  color: #fff !important;
+
+  i {
+    background: $amarelo !important;
+    color: $escuro;
+  }
+}
+
+.marcaOutro {
+  background: #ede9fe;
+  border: 1.5px solid #7c3aed;
+}
+
+.diaEscolhido {
+  border-color: rgba($verde, 0.45);
+  background: #f3fbf5;
+}
+
+.diaVazio {
+  background: #fff;
+  border-style: dashed;
+}
+
+.diaOutro {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: #6d28d9;
+  background: #ede9fe;
+  border-radius: 999px;
+  padding: 1px 6px;
+  white-space: nowrap;
 }

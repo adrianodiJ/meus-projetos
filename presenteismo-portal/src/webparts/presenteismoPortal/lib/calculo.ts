@@ -1,7 +1,7 @@
 import type { IColab, ILancamento, IParametros, Turno } from '../models';
 import { MOTIVOS_FALTA } from '../models';
-import { inicioPeriodo, mapaDias, periodo } from './calendario';
-import { dias, dt, ehTemp, semana } from './util';
+import { conta, diasEscolhidos, intervaloDoCalculo, marcacaoDoMes } from './calendario';
+import { dt, ehTemp, semana } from './util';
 
 export interface IFalta {
   u: string;
@@ -12,6 +12,8 @@ export interface IFalta {
 
 export interface IBloco {
   w: number;
+  /** chave da semana para ordenar e agrupar (ano + semana), pois os dias podem cruzar o ano */
+  s: string;
   t: Turno;
   /** horas previstas */
   p: number;
@@ -21,9 +23,9 @@ export interface IBloco {
   b: string;
 }
 
-/** Período de apuração do painel (mês-calendário ou ciclo da folha ponto, conforme o parâmetro de início). */
-export function periodoDoMes(ym: string, par?: IParametros): [string, string] {
-  return periodo(ym, par ? inicioPeriodo(par) : 1);
+/** Intervalo do cálculo do mês: do primeiro ao último dia escolhido no calendário (podem ser de outros meses). */
+export function periodoDoMes(ym: string, par: IParametros): [string, string] {
+  return intervaloDoCalculo(par, ym);
 }
 
 export function horasDoTurno(par: IParametros, t: Turno): number {
@@ -48,18 +50,19 @@ export function faltas(lancs: ILancamento[]): IFalta[] {
  * previstas = pessoas × horas do turno × dias que contam; falta = (injustificadas + atestados) × horas do turno.
  */
 export function calcular(rows: IColab[], fl: IFalta[], ym: string, par: IParametros): IBloco[] {
-  const [ini, fim] = periodoDoMes(ym, par);
-  const conta = mapaDias(ini, fim, par.aj);
-  const previsto = (d: string, t: Turno): boolean => !!conta[d] && conta[d][t];
+  const m = marcacaoDoMes(par, ym);
+  const previsto = (d: string, t: Turno): boolean => conta(m, d, t);
+  const chaveSemana = (d: string): string => `${d.slice(0, 4)}-${String(semana(d)).padStart(2, '0')}`;
   const R: Record<string, IBloco> = {};
   const ix: Record<string, IColab> = {};
   rows.forEach((r) => (ix[r.u] = r));
-  dias(ini, fim).forEach((d) => {
+  diasEscolhidos(m).forEach((d) => {
     const w = semana(d);
+    const s = chaveSemana(d);
     rows.forEach((r) => {
       if (!previsto(d, r.t)) return;
-      const k = `${w}|${r.t}`;
-      const o = R[k] || (R[k] = { w, t: r.t, p: 0, f: 0, a: d, b: d });
+      const k = `${s}|${r.t}`;
+      const o = R[k] || (R[k] = { w, s, t: r.t, p: 0, f: 0, a: d, b: d });
       o.p += horasDoTurno(par, r.t);
       if (d < o.a) o.a = d;
       if (d > o.b) o.b = d;
@@ -67,8 +70,8 @@ export function calcular(rows: IColab[], fl: IFalta[], ym: string, par: IParamet
   });
   fl.forEach((f) => {
     const r = ix[f.u];
-    if (!r || f.d < ini || f.d > fim || !previsto(f.d, r.t)) return;
-    const o = R[`${semana(f.d)}|${r.t}`];
+    if (!r || !previsto(f.d, r.t)) return;
+    const o = R[`${chaveSemana(f.d)}|${r.t}`];
     if (o) o.f += horasDoTurno(par, r.t);
   });
   return Object.keys(R).map((k) => R[k]);
@@ -95,12 +98,10 @@ export function resumoPainel(equipe: IColab[], lancs: ILancamento[], ym: string,
   const fl = faltas(lancs);
   const res = calcular(rows, fl, ym, par);
   const total = somar(res);
-  const [ini, fim] = periodoDoMes(ym, par);
-  const conta = mapaDias(ini, fim, par.aj);
-  const previsto = (d: string, t: Turno): boolean => !!conta[d] && conta[d][t];
+  const m = marcacaoDoMes(par, ym);
   const ix: Record<string, IColab> = {};
   rows.forEach((r) => (ix[r.u] = r));
-  const faltasMes = fl.filter((f) => ix[f.u] && f.d >= ini && f.d <= fim && previsto(f.d, ix[f.u].t));
+  const faltasMes = fl.filter((f) => ix[f.u] && conta(m, f.d, ix[f.u].t));
   return { rows, res, total, v: pct(total.p, total.f), faltasMes, ix };
 }
 
