@@ -3,7 +3,7 @@ import { Icon, Modal } from '@fluentui/react';
 import styles from './Calendario.module.scss';
 import { periodoDoMes } from '../lib/calculo';
 import { type IAjustes, mapaDias, regraPadrao } from '../lib/calendario';
-import { dias, dt, fmt, iso, num } from '../lib/util';
+import { dias, dt, ehTemp, fmt, int, iso, num } from '../lib/util';
 import { ROTULO_TURNO, type Turno, TURNOS } from '../models';
 import type { IDados } from './tipos';
 
@@ -49,6 +49,8 @@ const JanelaCalendario: React.FC<{ d: IDados; onFechar: () => void }> = ({ d, on
   const [ini, fim] = periodoDoMes(d.ym, d.params);
   const [rascunho, setRascunho] = React.useState<IAjustes | undefined>(undefined);
   const [salvando, setSalvando] = React.useState(false);
+  /** turnos que os cliques no número do dia, no dia da semana e nas ações em bloco alteram */
+  const [alvo, setAlvo] = React.useState<Turno[]>(TURNOS);
   React.useEffect(() => setRascunho(undefined), [d.ym, d.op, d.params.aj]);
 
   const aj: IAjustes = rascunho || d.params.aj || {};
@@ -62,22 +64,39 @@ const JanelaCalendario: React.FC<{ d: IDados; onFechar: () => void }> = ({ d, on
   const inicioMes = (d.params.ini || 1) <= 1;
   const rotulo = inicioMes ? `${MESES[dt(ini).getMonth()]} ${ini.slice(0, 4)}` : `${fmt(ini)} a ${fmt(fim)}`;
 
-  const definir = (dia: string, turnos: Turno[], valor: boolean): void => {
+  /** Marca (valor = true) ou desmarca vários dias de uma vez; o que voltar ao padrão deixa de ser ajuste. */
+  const aplicar = (diasAlvo: string[], turnos: Turno[], valor: boolean | 'padrao'): void => {
     const novo: IAjustes = { ...aj };
-    const x: Partial<Record<Turno, boolean>> = { ...(novo[dia] || {}) };
-    turnos.forEach((t) => {
-      if (padrao[dia][t] === valor) delete x[t];
-      else x[t] = valor;
+    diasAlvo.forEach((dia) => {
+      const x: Partial<Record<Turno, boolean>> = { ...(novo[dia] || {}) };
+      turnos.forEach((t) => {
+        if (valor === 'padrao' || padrao[dia][t] === valor) delete x[t];
+        else x[t] = valor;
+      });
+      if (Object.keys(x).length) novo[dia] = x;
+      else delete novo[dia];
     });
-    if (Object.keys(x).length) novo[dia] = x;
-    else delete novo[dia];
     setRascunho(novo);
   };
+  const definir = (dia: string, turnos: Turno[], valor: boolean): void => aplicar([dia], turnos, valor);
+  /** clique que liga se algum turno do alvo está desligado, e desliga se todos estão ligados */
+  const alternar = (diasAlvo: string[]): void => {
+    const todosLigados = diasAlvo.every((x) => alvo.every((t) => mapa[x][t]));
+    aplicar(diasAlvo, alvo, !todosLigados);
+  };
+  const restaurar = (): void => aplicar(lista, TURNOS, 'padrao');
 
-  const restaurar = (): void => {
-    const novo: IAjustes = { ...aj };
-    lista.forEach((x) => delete novo[x]);
-    setRascunho(novo);
+  // horas previstas = efetivos do turno × horas por dia × dias marcados (como no painel)
+  const efetivos = (t: Turno): number => d.equipe.filter((r) => r.t === t && !ehTemp(r)).length;
+  const horasDia = (t: Turno): number => Number(d.params.h[t]) || 0;
+  const diasDo = (t: Turno): number => lista.filter((x) => mapa[x][t]).length;
+  const previstas = (t: Turno): number => efetivos(t) * horasDia(t) * diasDo(t);
+  const totalPrevistas = TURNOS.reduce((s, t) => s + previstas(t), 0);
+  const todosAlvo = alvo.length === TURNOS.length;
+  const rotuloAlvo = todosAlvo ? 'todos os turnos' : alvo.map((t) => ROTULO_TURNO[t]).join(' e ');
+  const trocarAlvo = (t: Turno | 'todos'): void => {
+    if (t === 'todos') setAlvo(TURNOS);
+    else setAlvo(todosAlvo ? [t] : alvo.indexOf(t) >= 0 ? (alvo.length > 1 ? alvo.filter((x) => x !== t) : alvo) : TURNOS.filter((x) => x === t || alvo.indexOf(x) >= 0));
   };
 
   const sair = (acao: () => void): void => {
@@ -125,25 +144,54 @@ const JanelaCalendario: React.FC<{ d: IDados; onFechar: () => void }> = ({ d, on
 
       <div className={styles.corpo}>
         <div className={styles.resumo}>
-          {TURNOS.map((t) => {
-            const n = lista.filter((x) => mapa[x][t]).length;
-            return (
-              <div key={t} className={styles.turno}>
-                <div className={styles.turnoNumero}>{n}</div>
-                <div className={styles.turnoTexto}>
-                  <b>{ROTULO_TURNO[t]}</b>
-                  <span>
-                    dias · {num(n * (Number(d.params.h[t]) || 0))} h por pessoa
-                  </span>
-                </div>
+          {TURNOS.map((t) => (
+            <div key={t} className={styles.turno}>
+              <div className={styles.turnoNumero}>{diasDo(t)}</div>
+              <div className={styles.turnoTexto}>
+                <b>{ROTULO_TURNO[t]}</b>
+                <span>
+                  dias · {int(efetivos(t))} pessoas × {num(horasDia(t))} h
+                </span>
+                <strong>{num(previstas(t))} h previstas</strong>
               </div>
-            );
-          })}
-          <div className={styles.regra}>
-            <b>Regra da folha ponto</b>
-            Domingo não conta. ADM folga todos os sábados. 1º e 2º turno folgam os 2 primeiros sábados (3 quando o período tem 5).
+            </div>
+          ))}
+          <div className={styles.total}>
+            <small>Horas previstas do período</small>
+            <b>{num(totalPrevistas)} h</b>
+            <span>efetivos × horas por dia × dias marcados</span>
           </div>
         </div>
+
+        {editavel && (
+          <div className={styles.ferramentas}>
+            <div className={styles.alvo} role="group" aria-label="Turnos que a seleção altera">
+              <span>Escolher dias para</span>
+              <button type="button" className={todosAlvo ? styles.alvoOn : ''} aria-pressed={todosAlvo} onClick={() => trocarAlvo('todos')}>
+                Todos os turnos
+              </button>
+              {TURNOS.map((t) => {
+                const on = !todosAlvo && alvo.indexOf(t) >= 0;
+                return (
+                  <button key={t} type="button" className={on ? styles.alvoOn : ''} aria-pressed={on} onClick={() => trocarAlvo(t)}>
+                    {ROTULO_TURNO[t]}
+                  </button>
+                );
+              })}
+            </div>
+            <div className={styles.blocos}>
+              <button type="button" onClick={() => aplicar(lista, alvo, true)} title={`Marca todos os dias do período, inclusive sábados e domingos, para ${rotuloAlvo}`}>
+                <Icon iconName="CheckboxComposite" /> Marcar todos os dias
+              </button>
+              <button type="button" onClick={() => aplicar(lista, alvo, false)} title={`Desmarca todos os dias do período para ${rotuloAlvo}`}>
+                <Icon iconName="Checkbox" /> Desmarcar todos
+              </button>
+              <button type="button" onClick={() => aplicar(lista, alvo, 'padrao')} title={`Volta à regra da folha ponto para ${rotuloAlvo}`}>
+                <Icon iconName="Undo" /> Padrão da folha ponto
+              </button>
+            </div>
+          </div>
+        )}
 
         <div className={styles.legenda}>
           <span>
@@ -158,16 +206,33 @@ const JanelaCalendario: React.FC<{ d: IDados; onFechar: () => void }> = ({ d, on
           <span>
             <i className={styles.marcaHoje} /> hoje
           </span>
-          <span>{editavel ? 'Clique no turno para marcar ou desmarcar; clique no número para o dia inteiro.' : 'Só o administrador altera o calendário.'}</span>
+          <span>
+            {editavel
+              ? `Clique no número do dia ou no dia da semana (ex.: SÁB) para marcar/desmarcar ${rotuloAlvo}; a pílula muda só aquele turno. Padrão: domingo não conta, ADM folga aos sábados, 1º e 2º folgam os 2 primeiros sábados (3 se houver 5).`
+              : 'Só o administrador altera o calendário.'}
+          </span>
         </div>
 
         <div className={styles.rolagem}>
           <div className={styles.grade}>
-            {SEMANA.map((s, i) => (
-              <div key={s} className={`${styles.diaSemana} ${i === 0 || i === 6 ? styles.fimDeSemana : ''}`}>
-                {s}
-              </div>
-            ))}
+            {SEMANA.map((s, i) => {
+              const doDia = lista.filter((x) => dt(x).getDay() === i);
+              return editavel ? (
+                <button
+                  key={s}
+                  type="button"
+                  className={`${styles.diaSemana} ${styles.diaSemanaBotao} ${i === 0 || i === 6 ? styles.fimDeSemana : ''}`}
+                  title={`Marcar/desmarcar todas as ${s.toLowerCase()}s do período para ${rotuloAlvo}`}
+                  onClick={() => alternar(doDia)}
+                >
+                  {s}
+                </button>
+              ) : (
+                <div key={s} className={`${styles.diaSemana} ${i === 0 || i === 6 ? styles.fimDeSemana : ''}`}>
+                  {s}
+                </div>
+              );
+            })}
             {Array.from({ length: dt(ini).getDay() }).map((_, i) => (
               <div key={`v${i}`} />
             ))}
@@ -180,8 +245,8 @@ const JanelaCalendario: React.FC<{ d: IDados; onFechar: () => void }> = ({ d, on
                       type="button"
                       className={`${styles.diaNumero} ${algum ? '' : styles.diaNumeroFolga}`}
                       disabled={!editavel}
-                      title={editavel ? (algum ? 'Desmarcar o dia inteiro' : 'Marcar o dia inteiro') : undefined}
-                      onClick={() => definir(dia, TURNOS, !algum)}
+                      title={editavel ? `Marcar/desmarcar ${fmt(dia)} para ${rotuloAlvo}` : undefined}
+                      onClick={() => alternar([dia])}
                     >
                       {dia.slice(8)}
                     </button>
