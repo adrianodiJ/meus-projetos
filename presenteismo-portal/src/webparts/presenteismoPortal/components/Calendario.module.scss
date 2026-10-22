@@ -778,3 +778,11 @@ $fonte: 'Segoe UI', 'Segoe UI Web (West European)', -apple-system, BlinkMacSyste
   padding: 1px 6px;
   white-space: nowrap;
 }
+
+.diaFora {
+  opacity: 0.55;
+
+  &:hover {
+    opacity: 0.9;
+  }
+}

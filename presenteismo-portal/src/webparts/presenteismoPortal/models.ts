@@ -81,9 +81,11 @@ export interface IParametros {
   fpDe?: number;
   fpAte?: number;
   /**
-   * dias escolhidos no calendário para o cálculo de cada mês: "2026-10" → dia → turno → conta.
-   * Sem dias escolhidos, o mês não tem horas previstas.
+   * calendário único da operação: dia → turno → conta. Cada mês usa os dias marcados dentro da folha ponto dele.
+   * Sem dias marcados na folha, o mês não tem horas previstas.
    */
+  dias?: Record<string, Partial<Record<Turno, boolean>>>;
+  /** formato anterior (dias por mês de cálculo); lido só para juntar no calendário único */
   cal?: Record<string, Record<string, Partial<Record<Turno, boolean>>>>;
 }
 

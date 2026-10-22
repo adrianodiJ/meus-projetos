@@ -15,11 +15,11 @@ Substitui planilhas Excel/VBA. Idioma da interface e dos comentários: portuguê
 - Só efetivos entram no cálculo: área terminada em TEMP é temporário (aparece no Lançamento e nos relatórios).
 - Horas por dia: ADM 8,75; PRIMEIRO 8; SEGUNDO 8. Total previsto = pessoas × horas do turno × dias que contam
   (como na planilha "Presenteísmo FÍSIA"); falta = (injustificadas + atestados) × horas do turno.
-- Dias que contam: escolhidos pelo administrador no calendário do Painel, por mês de cálculo e por turno
-  (`cfg/params_<op>.cal["2026-10"]` = dia → turno → conta). Começa VAZIO: sem dias escolhidos o mês não tem horas
-  previstas. Folha ponto do mês = do dia 13 do mês anterior ao dia 12 do mês do cálculo (outubro = 13/09 a 12/10;
-  dias editáveis em Administração: `fpDe`/`fpAte`). O intervalo do cálculo é a folha, ampliada se algum dia escolhido
-  ficar fora dela; os lançamentos são lidos nesse intervalo. O botão "Aplicar folha ponto" marca a folha com a regra:
+- Dias que contam: marcados pelo administrador num calendário ÚNICO por operação, por turno
+  (`cfg/params_<op>.dias` = dia → turno → conta; o formato antigo `cal` por mês é juntado nele). Começa VAZIO.
+  Folha ponto do mês = do dia 13 do mês anterior ao dia 12 do mês do cálculo (outubro = 13/09 a 12/10; dias
+  editáveis em Administração: `fpDe`/`fpAte`). O cálculo do mês usa só os dias marcados dentro da folha dele;
+  trocar de mês não apaga nada. Os lançamentos são lidos no intervalo da folha. O botão "Aplicar folha ponto" marca a folha com a regra:
   domingo não; ADM folga aos sábados; PRIMEIRO e SEGUNDO folgam os 2 primeiros sábados da folha (3 se houver 5).
   `lib/calendario.ts`.
 - A falta conta no dia da falta, só se o dia foi escolhido para o turno da pessoa. Semana começa no domingo (WEEKNUM).

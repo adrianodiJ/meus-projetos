@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Icon, Modal } from '@fluentui/react';
 import styles from './Calendario.module.scss';
-import { conta, diasEscolhidos, type IMarcacao, marcacaoDoMes, outrosMeses, periodoFolha, regraFolhaPonto } from '../lib/calendario';
+import { conta, diasEscolhidos, type IMarcacao, marcacao, marcacaoDoMes, mesDaFolha, periodoFolha, recorte, regraFolhaPonto } from '../lib/calendario';
 import { dias, dt, ehTemp, fmt, int, iso, num } from '../lib/util';
 import { ROTULO_TURNO, type Turno, TURNOS } from '../models';
 import type { IDados } from './tipos';
@@ -21,7 +21,7 @@ const nomeMes = (ym: string): string => `${MESES[Number(ym.slice(5, 7)) - 1]} ${
 const mesCurto = (ym: string): string => `${MESES[Number(ym.slice(5, 7)) - 1].slice(0, 3)}/${ym.slice(2, 4)}`;
 const mesDoDia = (d: string): string => d.slice(0, 7);
 
-/** Quantos dias foram escolhidos para o cálculo do mês (selo do botão). */
+/** Quantos dias marcados caem na folha ponto do mês (selo do botão). */
 export const diasNoCalculo = (d: IDados): number => diasEscolhidos(marcacaoDoMes(d.params, d.ym)).length;
 
 /**
@@ -46,7 +46,8 @@ export const BotaoCalendario: React.FC<{ d: IDados; texto?: string }> = ({ d, te
 };
 
 const JanelaCalendario: React.FC<{ d: IDados; onFechar: () => void }> = ({ d, onFechar }) => {
-  const salvo = marcacaoDoMes(d.params, d.ym);
+  // calendário único da operação: trocar o mês do cálculo não apaga nada, nem o que ainda não foi salvo
+  const salvo = marcacao(d.params);
   const [rascunho, setRascunho] = React.useState<IMarcacao | undefined>(undefined);
   const [salvando, setSalvando] = React.useState(false);
   /** turnos que os cliques no número do dia, no dia da semana e nas ações em bloco alteram */
@@ -54,16 +55,15 @@ const JanelaCalendario: React.FC<{ d: IDados; onFechar: () => void }> = ({ d, on
   /** mês exibido na grade (pode ser outro que o do cálculo); abre no começo da folha ponto */
   const inicioFolha = mesDoDia(periodoFolha(d.ym, d.params)[0]);
   const [visivel, setVisivel] = React.useState(inicioFolha);
-  React.useEffect(() => {
-    setRascunho(undefined);
-    setVisivel(inicioFolha);
-  }, [d.ym, d.op, d.params.cal, inicioFolha]);
+  React.useEffect(() => setVisivel(inicioFolha), [inicioFolha]);
+  React.useEffect(() => setRascunho(undefined), [d.op]);
 
   const m: IMarcacao = rascunho || salvo;
-  const escolhidos = diasEscolhidos(m);
   const editavel = d.admin;
   const hoje = iso(new Date());
   const [ini0, fim0] = periodoFolha(d.ym, d.params);
+  /** dias marcados que entram no cálculo deste mês (dentro da folha) */
+  const escolhidos = diasEscolhidos(recorte(m, ini0, fim0));
 
   // grade do mês exibido
   const [vy, vm] = visivel.split('-').map(Number);
@@ -107,15 +107,7 @@ const JanelaCalendario: React.FC<{ d: IDados; onFechar: () => void }> = ({ d, on
     });
     guardar(novo);
   };
-  const limparTudo = (): void => {
-    const novo: IMarcacao = {};
-    Object.keys(m).forEach((dia) => {
-      const x: Partial<Record<Turno, boolean>> = { ...m[dia] };
-      alvo.forEach((t) => delete x[t]);
-      if (Object.keys(x).length) novo[dia] = x;
-    });
-    guardar(novo);
-  };
+  const limparFolha = (): void => aplicar(dias(ini0, fim0), alvo, false);
 
   // horas previstas = efetivos do turno × horas por dia × dias escolhidos (como no painel)
   const efetivos = (t: Turno): number => d.equipe.filter((r) => r.t === t && !ehTemp(r)).length;
@@ -130,33 +122,30 @@ const JanelaCalendario: React.FC<{ d: IDados; onFechar: () => void }> = ({ d, on
     else setAlvo(todosAlvo ? [t] : alvo.indexOf(t) >= 0 ? (alvo.length > 1 ? alvo.filter((x) => x !== t) : alvo) : TURNOS.filter((x) => x === t || alvo.indexOf(x) >= 0));
   };
 
-  // meses com dias escolhidos (atalhos) e quantos dias em cada
+  // atalhos: meses vizinhos da folha e quantos dias marcados há em cada mês do calendário
   const porMes: Record<string, number> = {};
-  escolhidos.forEach((x) => (porMes[mesDoDia(x)] = (porMes[mesDoDia(x)] || 0) + 1));
-  const mesesAtalho = Array.from(new Set([somarMes(d.ym, -1), d.ym, somarMes(d.ym, 1), ...Object.keys(porMes)])).sort();
+  diasEscolhidos(m).forEach((x) => (porMes[mesDoDia(x)] = (porMes[mesDoDia(x)] || 0) + 1));
+  const mesesAtalho = Array.from(new Set([mesDoDia(ini0), mesDoDia(fim0), somarMes(mesDoDia(ini0), -1), somarMes(mesDoDia(fim0), 1)])).sort();
 
   const sair = (acao: () => void): void => {
-    if (pendentes && !window.confirm('Há dias escolhidos que ainda não foram salvos. Descartar?')) return;
+    if (pendentes && !window.confirm('Há dias marcados que ainda não foram salvos. Descartar?')) return;
     acao();
   };
 
   const salvar = async (): Promise<void> => {
     if (!rascunho) return;
     setSalvando(true);
-    const cal = { ...(d.params.cal || {}) };
-    if (diasEscolhidos(rascunho).length) cal[d.ym] = rascunho;
-    else delete cal[d.ym];
-    const novo: Record<string, unknown> = { ...d.params, cal };
-    delete novo.aj; // formato antigo (ajustes sobre a regra), não é mais usado
-    await d.gravar(async () => {
+    const novo: Record<string, unknown> = { ...d.params, dias: rascunho };
+    delete novo.cal; // formato anterior (dias por mês de cálculo), já juntado no calendário único
+    delete novo.aj; // formato mais antigo (ajustes sobre a regra)
+    const ok = await d.gravar(async () => {
       await d.servicos.dados.gravar(`cfg/params_${d.op}`, novo);
-      d.registrar('calendário', `${nomeMes(d.ym)} · ${diasEscolhidos(rascunho).length} dia(s) escolhido(s)`);
-    }, `Calendário de ${nomeMes(d.ym)} salvo. O painel já usa os dias escolhidos.`);
+      d.registrar('calendário', `${pendentes} dia(s) alterado(s) · folha de ${nomeMes(d.ym)} com ${diasEscolhidos(recorte(rascunho, ini0, fim0)).length} dia(s)`);
+    }, 'Calendário salvo. O painel já usa os dias marcados.');
+    if (ok) setRascunho(undefined);
     setSalvando(false);
   };
 
-  const primeiro = escolhidos[0];
-  const ultimo = escolhidos[escolhidos.length - 1];
 
   return (
     <Modal isOpen onDismiss={() => sair(onFechar)} containerClassName={styles.janela} isBlocking={false}>
@@ -170,16 +159,16 @@ const JanelaCalendario: React.FC<{ d: IDados; onFechar: () => void }> = ({ d, on
           <span>
             Folha ponto {fmt(ini0)}/{ini0.slice(0, 4)} a {fmt(fim0)}/{fim0.slice(0, 4)} ·{' '}
             {escolhidos.length
-              ? `${int(escolhidos.length)} dia${escolhidos.length > 1 ? 's' : ''} escolhido${escolhidos.length > 1 ? 's' : ''}${primeiro < ini0 || ultimo > fim0 ? ` (de ${fmt(primeiro)} a ${fmt(ultimo)})` : ''}`
-              : 'nenhum dia escolhido ainda'}
+              ? `${int(escolhidos.length)} dia${escolhidos.length > 1 ? 's' : ''} marcado${escolhidos.length > 1 ? 's' : ''} na folha`
+              : 'nenhum dia marcado na folha ainda'}
           </span>
         </div>
         <div className={styles.navegar} title="Mês do cálculo (o mesmo do Painel)">
-          <button type="button" aria-label="Mês de cálculo anterior" onClick={() => sair(() => d.setYm(somarMes(d.ym, -1)))}>
+          <button type="button" aria-label="Mês de cálculo anterior" onClick={() => d.setYm(somarMes(d.ym, -1))}>
             <Icon iconName="ChevronLeft" />
           </button>
           <b>Cálculo de {nomeMes(d.ym)}</b>
-          <button type="button" aria-label="Próximo mês de cálculo" onClick={() => sair(() => d.setYm(somarMes(d.ym, 1)))}>
+          <button type="button" aria-label="Próximo mês de cálculo" onClick={() => d.setYm(somarMes(d.ym, 1))}>
             <Icon iconName="ChevronRight" />
           </button>
         </div>
@@ -239,8 +228,8 @@ const JanelaCalendario: React.FC<{ d: IDados; onFechar: () => void }> = ({ d, on
               >
                 <Icon iconName="Lightbulb" /> Aplicar folha ponto ({fmt(ini0)} a {fmt(fim0)})
               </button>
-              <button type="button" onClick={limparTudo} title={`Desmarca todos os dias do cálculo de ${nomeMes(d.ym)}, em todos os meses, para ${rotuloAlvo}`}>
-                <Icon iconName="Delete" /> Limpar tudo
+              <button type="button" onClick={limparFolha} title={`Desmarca ${fmt(ini0)} a ${fmt(fim0)} (a folha de ${nomeMes(d.ym)}) para ${rotuloAlvo}`}>
+                <Icon iconName="Delete" /> Limpar folha
               </button>
             </div>
           </div>
@@ -257,7 +246,7 @@ const JanelaCalendario: React.FC<{ d: IDados; onFechar: () => void }> = ({ d, on
             </button>
           </div>
           <div className={styles.mesesAtalhos}>
-            <span>Dias escolhidos por mês:</span>
+            <span>Dias marcados por mês:</span>
             {mesesAtalho.map((x) => (
               <button key={x} type="button" className={x === visivel ? styles.mesAtivo : ''} aria-pressed={x === visivel} onClick={() => setVisivel(x)}>
                 {mesCurto(x)}
@@ -275,7 +264,7 @@ const JanelaCalendario: React.FC<{ d: IDados; onFechar: () => void }> = ({ d, on
             <i className={styles.marcaNao} /> não conta
           </span>
           <span>
-            <i className={styles.marcaOutro} /> já escolhido no cálculo de outro mês
+            <i className={styles.marcaOutro} /> fora da folha de {mesCurto(d.ym)} (entra no cálculo do mês indicado)
           </span>
           <span>
             <i className={styles.marcaHoje} /> hoje
@@ -312,9 +301,12 @@ const JanelaCalendario: React.FC<{ d: IDados; onFechar: () => void }> = ({ d, on
             ))}
             {lista.map((dia) => {
               const algum = TURNOS.some((t) => conta(m, dia, t));
-              const outros = outrosMeses(d.params, d.ym, dia);
+              const fora = dia < ini0 || dia > fim0;
               return (
-                <div key={dia} className={`${styles.dia} ${algum ? styles.diaEscolhido : styles.diaVazio} ${dia === hoje ? styles.diaHoje : ''}`}>
+                <div
+                  key={dia}
+                  className={`${styles.dia} ${algum ? styles.diaEscolhido : styles.diaVazio} ${fora ? styles.diaFora : ''} ${dia === hoje ? styles.diaHoje : ''}`}
+                >
                   <div className={styles.diaTopo}>
                     <button
                       type="button"
@@ -325,9 +317,9 @@ const JanelaCalendario: React.FC<{ d: IDados; onFechar: () => void }> = ({ d, on
                     >
                       {dia.slice(8)}
                     </button>
-                    {outros.length > 0 ? (
-                      <span className={styles.diaOutro} title={`Este dia também está no cálculo de ${outros.map(nomeMes).join(', ')}`}>
-                        em {outros.map(mesCurto).join(', ')}
+                    {fora ? (
+                      <span className={styles.diaOutro} title={`Fora da folha de ${nomeMes(d.ym)}: este dia entra no cálculo de ${nomeMes(mesDaFolha(dia, d.params))}`}>
+                        folha {mesCurto(mesDaFolha(dia, d.params))}
                       </span>
                     ) : (
                       <span className={styles.diaMes}>{SEMANA[dt(dia).getDay()].toLowerCase()}</span>
@@ -366,7 +358,7 @@ const JanelaCalendario: React.FC<{ d: IDados; onFechar: () => void }> = ({ d, on
               {pendentes} dia{pendentes > 1 ? 's' : ''} com alteração não salva. O painel só muda depois de salvar.
             </span>
           ) : (
-            'Só os dias marcados entram nas horas previstas, e as faltas só contam nesses dias.'
+            `O cálculo de ${nomeMes(d.ym)} usa os dias marcados de ${fmt(ini0)} a ${fmt(fim0)}; as faltas só contam nesses dias. Trocar de mês não apaga nada.`
           )}
         </span>
         {editavel && rascunho && (

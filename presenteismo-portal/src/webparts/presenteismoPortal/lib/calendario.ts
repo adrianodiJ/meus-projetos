@@ -2,9 +2,9 @@ import { type IParametros, type Turno, TURNOS } from '../models';
 import { dias, dt, iso } from './util';
 
 /**
- * Dias escolhidos para o cálculo de um mês: dia (aaaa-mm-dd) → turno → conta.
- * Dia ou turno ausente não conta. Os dias podem ser de qualquer mês (a folha ponto de outubro vai
- * de 13/09 a 12/10).
+ * Calendário da operação: dia (aaaa-mm-dd) → turno → conta. Dia ou turno ausente não conta.
+ * Um só calendário para todos os meses; o cálculo de cada mês usa os dias marcados dentro da folha ponto dele
+ * (outubro = 13/09 a 12/10).
  */
 export type IMarcacao = Record<string, Partial<Record<Turno, boolean>>>;
 
@@ -31,8 +31,23 @@ export function periodoFolha(ym: string, par: IParametros): [string, string] {
   return [dia(y, m - 2, de), dia(y, m - 1, ate)];
 }
 
-/** Os dias escolhidos para o cálculo do mês (vazio = nenhum dia conta). */
-export const marcacaoDoMes = (par: IParametros, ym: string): IMarcacao => (par.cal && par.cal[ym]) || {};
+/**
+ * O calendário da operação (dias marcados de todos os meses). Se ainda estiver no formato anterior
+ * (dias por mês de cálculo), junta tudo num só.
+ */
+export function marcacao(par: IParametros): IMarcacao {
+  if (par.dias) return par.dias;
+  const junto: IMarcacao = {};
+  const cal = par.cal || {};
+  Object.keys(cal).forEach((ym) =>
+    Object.keys(cal[ym]).forEach((d) => {
+      TURNOS.forEach((t) => {
+        if (cal[ym][d][t]) junto[d] = { ...(junto[d] || {}), [t]: true };
+      });
+    })
+  );
+  return junto;
+}
 
 export const conta = (m: IMarcacao, d: string, t: Turno): boolean => !!(m[d] && m[d][t]);
 
@@ -42,12 +57,34 @@ export const diasEscolhidos = (m: IMarcacao): string[] =>
     .filter((d) => TURNOS.some((t) => conta(m, d, t)))
     .sort();
 
-/** Intervalo do cálculo: a folha ponto do mês, ampliada se algum dia escolhido ficar fora dela. */
-export function intervaloDoCalculo(par: IParametros, ym: string): [string, string] {
+/** Só os dias de uma marcação que caem entre ini e fim. */
+export function recorte(m: IMarcacao, ini: string, fim: string): IMarcacao {
+  const o: IMarcacao = {};
+  Object.keys(m).forEach((d) => {
+    if (d >= ini && d <= fim) o[d] = m[d];
+  });
+  return o;
+}
+
+/** Os dias que entram no cálculo do mês: os marcados dentro da folha ponto dele. */
+export function marcacaoDoMes(par: IParametros, ym: string): IMarcacao {
   const [ini, fim] = periodoFolha(ym, par);
-  const lista = diasEscolhidos(marcacaoDoMes(par, ym));
-  if (!lista.length) return [ini, fim];
-  return [lista[0] < ini ? lista[0] : ini, lista[lista.length - 1] > fim ? lista[lista.length - 1] : fim];
+  return recorte(marcacao(par), ini, fim);
+}
+
+/** Intervalo do cálculo do mês = a folha ponto dele. */
+export const intervaloDoCalculo = (par: IParametros, ym: string): [string, string] => periodoFolha(ym, par);
+
+/** Mês de cálculo cuja folha ponto contém o dia (ex.: 20/09 → outubro, com a folha 13 a 12). */
+export function mesDaFolha(d: string, par: IParametros): string {
+  const [y, m] = d.split('-').map(Number);
+  for (const n of [0, 1, -1]) {
+    const x = new Date(y, m - 1 + n, 1);
+    const ym = `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}`;
+    const [ini, fim] = periodoFolha(ym, par);
+    if (d >= ini && d <= fim) return ym;
+  }
+  return d.slice(0, 7);
 }
 
 /**
@@ -71,14 +108,8 @@ export function regraFolhaPonto(ini: string, fim: string): Record<string, Record
   return mapa;
 }
 
-/** "O dia conta para o turno em algum mês de cálculo?" (relatórios que pegam um intervalo livre de datas). */
+/** "O dia está marcado para o turno no calendário?" (relatórios que pegam um intervalo livre de datas). */
 export function contadorDeDias(par: IParametros): (d: string, t: Turno) => boolean {
-  const cal = par.cal || {};
-  return (d: string, t: Turno): boolean => Object.keys(cal).some((ym) => conta(cal[ym], d, t));
-}
-
-/** Em quais outros meses de cálculo o dia já foi escolhido (para avisar contagem em dobro). */
-export function outrosMeses(par: IParametros, ym: string, d: string): string[] {
-  const cal = par.cal || {};
-  return Object.keys(cal).filter((x) => x !== ym && TURNOS.some((t) => conta(cal[x], d, t)));
+  const m = marcacao(par);
+  return (d: string, t: Turno): boolean => conta(m, d, t);
 }

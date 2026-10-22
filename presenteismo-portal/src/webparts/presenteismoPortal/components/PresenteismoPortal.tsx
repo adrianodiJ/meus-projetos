@@ -173,7 +173,8 @@ export default function PresenteismoPortal(props: IPortalProps): JSX.Element {
           meta: parD && parD.meta ? parD.meta : PARAMETROS_PADRAO.meta,
           fpDe: parD && parD.fpDe ? parD.fpDe : undefined,
           fpAte: parD && parD.fpAte ? parD.fpAte : undefined,
-          cal: (parD && parD.cal) || {}
+          dias: parD && parD.dias ? parD.dias : undefined,
+          cal: parD && parD.cal ? parD.cal : undefined
         };
         const [ini, fim] = periodoDoMes(ym, par);
         const [hcD, absD, mes, dia] = await Promise.all([
