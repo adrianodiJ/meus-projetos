@@ -24,7 +24,6 @@ import {
 } from '../models';
 import { calcularAcesso } from '../lib/acesso';
 import { periodoDoMes } from '../lib/calculo';
-import { inicioPeriodo, periodoDaData } from '../lib/calendario';
 import { chave, iso } from '../lib/util';
 import { Acompanhamento } from './Acompanhamento';
 import { Administracao } from './Administracao';
@@ -112,8 +111,6 @@ export default function PresenteismoPortal(props: IPortalProps): JSX.Element {
 
   const botaoUsuario = React.useRef<HTMLButtonElement>(null);
   const reqRef = React.useRef(0);
-  /** o período inicial segue o dia de início da folha ponto (ajustado uma vez, na primeira carga) */
-  const ymAjustado = React.useRef(false);
 
   // ------------------------------------------------------------ usuário efetivo
   const acesso = React.useMemo(
@@ -174,17 +171,10 @@ export default function PresenteismoPortal(props: IPortalProps): JSX.Element {
         const par: IParametros = {
           h: { ...PARAMETROS_PADRAO.h, ...((parD && parD.h) || {}) },
           meta: parD && parD.meta ? parD.meta : PARAMETROS_PADRAO.meta,
-          ini: parD && parD.ini ? parD.ini : 1,
+          fpDe: parD && parD.fpDe ? parD.fpDe : undefined,
+          fpAte: parD && parD.fpAte ? parD.fpAte : undefined,
           cal: (parD && parD.cal) || {}
         };
-        if (!ymAjustado.current) {
-          ymAjustado.current = true;
-          const atual = periodoDaData(new Date(), inicioPeriodo(par));
-          if (atual !== ym) {
-            setYm(atual);
-            return;
-          }
-        }
         const [ini, fim] = periodoDoMes(ym, par);
         const [hcD, absD, mes, dia] = await Promise.all([
           servicos.dados.ler<IHeadcount>(`hc/${opAtual}`),

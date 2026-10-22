@@ -3,31 +3,32 @@ import { dias, dt, iso } from './util';
 
 /**
  * Dias escolhidos para o cálculo de um mês: dia (aaaa-mm-dd) → turno → conta.
- * Dia ou turno ausente não conta. Os dias podem ser de qualquer mês (ex.: o cálculo de outubro
- * pode usar de 13/09 a 12/10, como na folha ponto).
+ * Dia ou turno ausente não conta. Os dias podem ser de qualquer mês (a folha ponto de outubro vai
+ * de 13/09 a 12/10).
  */
 export type IMarcacao = Record<string, Partial<Record<Turno, boolean>>>;
 
-/** Dia em que começa o período padrão (folha ponto). 1 = mês-calendário. */
-export const inicioPeriodo = (par: IParametros): number => {
-  const n = Math.round(Number(par.ini) || 1);
-  return n < 1 || n > 28 ? 1 : n;
-};
+export const FOLHA_DE_PADRAO = 13;
+export const FOLHA_ATE_PADRAO = 12;
 
-/**
- * Período padrão do mês "2026-08" (usado pelo botão "Aplicar regra da folha ponto" e enquanto nenhum dia foi escolhido).
- * Início 1: 01/08 a 31/08. Início 13: 13/08 a 12/09.
- */
-export function periodo(ym: string, inicio: number = 1): [string, string] {
-  const [y, m] = ym.split('-').map(Number);
-  if (inicio <= 1) return [iso(new Date(y, m - 1, 1)), iso(new Date(y, m, 0))];
-  return [iso(new Date(y, m - 1, inicio)), iso(new Date(y, m, inicio - 1))];
+/** Dias da folha ponto: (de) do mês anterior até (ate) do mês do cálculo. */
+export function diasDaFolha(par: IParametros): { de: number; ate: number } {
+  const ok = (v: unknown, padrao: number): number => {
+    const n = Math.round(Number(v));
+    return n >= 1 && n <= 31 ? n : padrao;
+  };
+  return { de: ok(par.fpDe, FOLHA_DE_PADRAO), ate: ok(par.fpAte, FOLHA_ATE_PADRAO) };
 }
 
-/** Mês de cálculo que contém a data (para abrir o painel no mês atual). */
-export function periodoDaData(d: Date, inicio: number): string {
-  const ref = inicio > 1 && d.getDate() < inicio ? new Date(d.getFullYear(), d.getMonth() - 1, 1) : d;
-  return `${ref.getFullYear()}-${String(ref.getMonth() + 1).padStart(2, '0')}`;
+/**
+ * Folha ponto do mês "2026-10": do dia 13 de setembro ao dia 12 de outubro (com os dias padrão).
+ * Vale para qualquer mês escolhido; dia maior que o fim do mês vira o último dia do mês.
+ */
+export function periodoFolha(ym: string, par: IParametros): [string, string] {
+  const [y, m] = ym.split('-').map(Number);
+  const { de, ate } = diasDaFolha(par);
+  const dia = (ano: number, mes0: number, n: number): string => iso(new Date(ano, mes0, Math.min(n, new Date(ano, mes0 + 1, 0).getDate())));
+  return [dia(y, m - 2, de), dia(y, m - 1, ate)];
 }
 
 /** Os dias escolhidos para o cálculo do mês (vazio = nenhum dia conta). */
@@ -41,17 +42,19 @@ export const diasEscolhidos = (m: IMarcacao): string[] =>
     .filter((d) => TURNOS.some((t) => conta(m, d, t)))
     .sort();
 
-/** Intervalo do cálculo: do primeiro ao último dia escolhido; sem nenhum, o período padrão do mês. */
+/** Intervalo do cálculo: a folha ponto do mês, ampliada se algum dia escolhido ficar fora dela. */
 export function intervaloDoCalculo(par: IParametros, ym: string): [string, string] {
+  const [ini, fim] = periodoFolha(ym, par);
   const lista = diasEscolhidos(marcacaoDoMes(par, ym));
-  return lista.length ? [lista[0], lista[lista.length - 1]] : periodo(ym, inicioPeriodo(par));
+  if (!lista.length) return [ini, fim];
+  return [lista[0] < ini ? lista[0] : ini, lista[lista.length - 1] > fim ? lista[lista.length - 1] : fim];
 }
 
 /**
  * Regra da folha ponto (aplicada pelo botão, não é mais automática):
  * - domingo não conta;
  * - ADM folga todos os sábados;
- * - 1º e 2º turno folgam os 2 primeiros sábados do período (3, se o período tiver 5).
+ * - 1º e 2º turno folgam os 2 primeiros sábados da folha (3, se a folha tiver 5).
  */
 export function regraFolhaPonto(ini: string, fim: string): Record<string, Record<Turno, boolean>> {
   const lista = dias(ini, fim);

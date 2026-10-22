@@ -1,7 +1,8 @@
 import * as React from 'react';
 import { Icon } from '@fluentui/react';
 import styles from './QualityPortal.module.scss';
-import { chave, dataHora, ordenarPt, unicos } from '../lib/util';
+import { diasDaFolha, periodoFolha } from '../lib/calendario';
+import { chave, dataHora, fmt, ordenarPt, unicos } from '../lib/util';
 import { type IAbs, type IOperacao, ROTULO_TURNO, TURNOS } from '../models';
 import { provisionarListas } from '../services/Provisionamento';
 import { LogoOperacao } from './SeletorOperacao';
@@ -31,10 +32,16 @@ export const Administracao: React.FC<{ d: IDados; listasOk: boolean }> = ({ d, l
   };
 
   // ---------------------------------------------------------------- parâmetros e operações
-  const salvarParametros = (h: Record<string, number>, meta: number, detalhe: string, ini?: number): void => {
+  const folha = diasDaFolha(d.params);
+  const [exIni, exFim] = periodoFolha(d.ym, d.params);
+  const mesExemplo = new Date(Number(d.ym.slice(0, 4)), Number(d.ym.slice(5, 7)) - 1, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+
+  const salvarParametros = (h: Record<string, number>, meta: number, detalhe: string, folha?: { fpDe?: number; fpAte?: number }): void => {
     d.gravar(async () => {
-      // mantém o calendário (ajustes de dias) e o início do período já gravados
-      await d.servicos.dados.gravar(`cfg/params_${d.op}`, { ...d.params, h, meta, ini: ini === undefined ? d.params.ini : ini });
+      // mantém o calendário (dias escolhidos) e os dias da folha ponto já gravados
+      const novo: Record<string, unknown> = { ...d.params, h, meta, ...(folha || {}) };
+      delete novo.ini; // formato antigo (início do período), substituído pelos dias da folha ponto
+      await d.servicos.dados.gravar(`cfg/params_${d.op}`, novo);
       d.registrar('parâmetro', detalhe);
     }, 'Parâmetro salvo.').catch(() => undefined);
   };
@@ -274,25 +281,44 @@ export const Administracao: React.FC<{ d: IDados; listasOk: boolean }> = ({ d, l
                   }}
                 />
               </label>
+            </div>
+            <div className={styles.fileira} style={{ marginTop: 14 }}>
               <label className={styles.campo}>
-                Início do período (dia da folha ponto)
+                Folha ponto: do dia (mês anterior)
                 <input
-                  key={`ini${d.params.ini || 1}`}
+                  key={`de${folha.de}`}
                   type="number"
                   step="1"
                   min="1"
-                  max="28"
-                  defaultValue={d.params.ini || 1}
+                  max="31"
+                  defaultValue={folha.de}
                   onBlur={(e) => {
                     const v = Math.round(Number(e.target.value));
-                    if (isNaN(v) || v < 1 || v > 28 || v === (d.params.ini || 1)) return;
-                    salvarParametros(d.params.h, d.params.meta, `início do período = dia ${v}`, v);
+                    if (isNaN(v) || v < 1 || v > 31 || v === folha.de) return;
+                    salvarParametros(d.params.h, d.params.meta, `folha ponto: do dia ${v}`, { fpDe: v, fpAte: folha.ate });
+                  }}
+                />
+              </label>
+              <label className={styles.campo}>
+                até o dia (mês do cálculo)
+                <input
+                  key={`ate${folha.ate}`}
+                  type="number"
+                  step="1"
+                  min="1"
+                  max="31"
+                  defaultValue={folha.ate}
+                  onBlur={(e) => {
+                    const v = Math.round(Number(e.target.value));
+                    if (isNaN(v) || v < 1 || v > 31 || v === folha.ate) return;
+                    salvarParametros(d.params.h, d.params.meta, `folha ponto: até o dia ${v}`, { fpDe: folha.de, fpAte: v });
                   }}
                 />
               </label>
             </div>
             <p className={styles.mudo} style={{ margin: '10px 0 0' }}>
-              Início do período: 1 = mês-calendário; 13 = de 13 a 12 do mês seguinte (folha ponto). Os dias que contam (sábados, feriados) ficam no calendário do Painel.
+              Folha ponto de {mesExemplo}: <b>{fmt(exIni)}/{exIni.slice(0, 4)} a {fmt(exFim)}/{exFim.slice(0, 4)}</b> (do dia {folha.de} do mês anterior ao dia {folha.ate} do mês do cálculo). É o
+              período que o botão “Aplicar folha ponto” marca no calendário do Painel; os dias que contam ficam no calendário.
             </p>
           </Cartao>
 

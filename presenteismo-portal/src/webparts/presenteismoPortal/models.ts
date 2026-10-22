@@ -74,8 +74,12 @@ export interface IHeadcount {
 export interface IParametros {
   h: Record<Turno, number>;
   meta: number;
-  /** dia de início do período de apuração (folha ponto); 1 = mês-calendário */
-  ini?: number;
+  /**
+   * folha ponto do mês: do dia fpDe do mês anterior ao dia fpAte do mês do cálculo
+   * (padrão 13 e 12: outubro = 13/09 a 12/10)
+   */
+  fpDe?: number;
+  fpAte?: number;
   /**
    * dias escolhidos no calendário para o cálculo de cada mês: "2026-10" → dia → turno → conta.
    * Sem dias escolhidos, o mês não tem horas previstas.

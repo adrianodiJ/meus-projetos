@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Icon, Modal } from '@fluentui/react';
 import styles from './Calendario.module.scss';
-import { conta, diasEscolhidos, inicioPeriodo, type IMarcacao, marcacaoDoMes, outrosMeses, periodo, regraFolhaPonto } from '../lib/calendario';
+import { conta, diasEscolhidos, type IMarcacao, marcacaoDoMes, outrosMeses, periodoFolha, regraFolhaPonto } from '../lib/calendario';
 import { dias, dt, ehTemp, fmt, int, iso, num } from '../lib/util';
 import { ROTULO_TURNO, type Turno, TURNOS } from '../models';
 import type { IDados } from './tipos';
@@ -51,18 +51,19 @@ const JanelaCalendario: React.FC<{ d: IDados; onFechar: () => void }> = ({ d, on
   const [salvando, setSalvando] = React.useState(false);
   /** turnos que os cliques no número do dia, no dia da semana e nas ações em bloco alteram */
   const [alvo, setAlvo] = React.useState<Turno[]>(TURNOS);
-  /** mês exibido na grade (pode ser outro que o do cálculo) */
-  const [visivel, setVisivel] = React.useState(d.ym);
+  /** mês exibido na grade (pode ser outro que o do cálculo); abre no começo da folha ponto */
+  const inicioFolha = mesDoDia(periodoFolha(d.ym, d.params)[0]);
+  const [visivel, setVisivel] = React.useState(inicioFolha);
   React.useEffect(() => {
     setRascunho(undefined);
-    setVisivel(d.ym);
-  }, [d.ym, d.op, d.params.cal]);
+    setVisivel(inicioFolha);
+  }, [d.ym, d.op, d.params.cal, inicioFolha]);
 
   const m: IMarcacao = rascunho || salvo;
   const escolhidos = diasEscolhidos(m);
   const editavel = d.admin;
   const hoje = iso(new Date());
-  const [ini0, fim0] = periodo(d.ym, inicioPeriodo(d.params));
+  const [ini0, fim0] = periodoFolha(d.ym, d.params);
 
   // grade do mês exibido
   const [vy, vm] = visivel.split('-').map(Number);
@@ -167,9 +168,10 @@ const JanelaCalendario: React.FC<{ d: IDados; onFechar: () => void }> = ({ d, on
           <small>Horas previstas · {d.opNome(d.op)}</small>
           <h2>Dias do cálculo de {nomeMes(d.ym)}</h2>
           <span>
+            Folha ponto {fmt(ini0)}/{ini0.slice(0, 4)} a {fmt(fim0)}/{fim0.slice(0, 4)} ·{' '}
             {escolhidos.length
-              ? `${int(escolhidos.length)} dia${escolhidos.length > 1 ? 's' : ''} escolhido${escolhidos.length > 1 ? 's' : ''} · de ${fmt(primeiro)}/${primeiro.slice(0, 4)} a ${fmt(ultimo)}/${ultimo.slice(0, 4)}`
-              : 'Nenhum dia escolhido: o mês ainda não tem horas previstas'}
+              ? `${int(escolhidos.length)} dia${escolhidos.length > 1 ? 's' : ''} escolhido${escolhidos.length > 1 ? 's' : ''}${primeiro < ini0 || ultimo > fim0 ? ` (de ${fmt(primeiro)} a ${fmt(ultimo)})` : ''}`
+              : 'nenhum dia escolhido ainda'}
           </span>
         </div>
         <div className={styles.navegar} title="Mês do cálculo (o mesmo do Painel)">
@@ -235,7 +237,7 @@ const JanelaCalendario: React.FC<{ d: IDados; onFechar: () => void }> = ({ d, on
                 onClick={aplicarRegra}
                 title={`Marca ${fmt(ini0)} a ${fmt(fim0)} pela folha ponto (domingo não conta; ADM folga aos sábados; 1º e 2º folgam os 2 primeiros sábados, 3 se houver 5) para ${rotuloAlvo}`}
               >
-                <Icon iconName="Lightbulb" /> Aplicar regra da folha ponto
+                <Icon iconName="Lightbulb" /> Aplicar folha ponto ({fmt(ini0)} a {fmt(fim0)})
               </button>
               <button type="button" onClick={limparTudo} title={`Desmarca todos os dias do cálculo de ${nomeMes(d.ym)}, em todos os meses, para ${rotuloAlvo}`}>
                 <Icon iconName="Delete" /> Limpar tudo
