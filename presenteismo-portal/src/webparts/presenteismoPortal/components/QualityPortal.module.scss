@@ -2796,3 +2796,113 @@ $alertaTexto: #92400e;
   font-size: 13px;
   text-align: center;
 }
+
+// ---------------------------------------------------------------- coordenadores separados por operação
+.gruposOp {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.grupoOp {
+  border: 1px solid $borda;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.grupoOpTopo {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border: 0;
+  border-bottom: 1px solid $borda;
+  background: #f8f9fb;
+  font: inherit;
+  color: $texto;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover {
+    background: #fff8db;
+  }
+
+  &[aria-expanded='false'] {
+    border-bottom: 0;
+  }
+}
+
+.grupoOpLogo {
+  width: 64px;
+  height: 40px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  img {
+    max-width: 64px;
+    max-height: 36px;
+    object-fit: contain;
+  }
+}
+
+.grupoOpMono {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.grupoOpTexto {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+
+  b {
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+  }
+
+  small {
+    font-size: 12px;
+    color: $suave;
+  }
+}
+
+.grupoOpNumeros {
+  flex: none;
+}
+
+.grupoOpSeta {
+  flex: none;
+  font-size: 12px;
+  color: $suave;
+}
+
+.seloOk {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  background: #dcfce7;
+  color: #166534;
+}
+
+@media (max-width: 640px) {
+  .grupoOpNumeros {
+    display: none;
+  }
+}

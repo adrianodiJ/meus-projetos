@@ -4,6 +4,7 @@ import styles from './QualityPortal.module.scss';
 import { chave, dataHora, emailDhl, int, nz, ordenarPt, unicos } from '../lib/util';
 import { type IGestor, type IPedido, type IUsuario, pedidoOp } from '../models';
 import { DOC_GESTORES } from '../services/Coordenadores';
+import { LogoOperacao, rotuloOperacao } from './SeletorOperacao';
 import type { IDados } from './tipos';
 import { Aviso, Avatar, Cartao, Kpi, Pagina, Vazio } from './ui';
 
@@ -17,6 +18,8 @@ export const Usuarios: React.FC<{ d: IDados; listasOk: boolean }> = ({ d, listas
   const [filtroOp, setFiltroOp] = React.useState('');
   const [soSemEmail, setSoSemEmail] = React.useState(false);
   const [buscando, setBuscando] = React.useState('');
+  /** operações recolhidas na lista de coordenadores */
+  const [fechados, setFechados] = React.useState<Record<string, boolean>>({});
 
   if (!listasOk) {
     return (
@@ -108,7 +111,11 @@ export const Usuarios: React.FC<{ d: IDados; listasOk: boolean }> = ({ d, listas
   const q = nz(busca);
   const coordenadores = d.gestores
     .filter((g) => (!filtroOp || g.op === filtroOp) && (!soSemEmail || !g.email) && (!q || nz(`${g.g} ${g.email} ${g.nome || ''}`).indexOf(q) >= 0))
-    .sort((a, b) => ordenarPt(d.opNome(a.op), d.opNome(b.op)) || ordenarPt(a.g, b.g));
+    .sort((a, b) => ordenarPt(a.g, b.g));
+  // um bloco por operação: a operação aberta no portal primeiro, depois as outras em ordem alfabética
+  const idsOp = unicos(coordenadores.map((g) => g.op)).sort((a, b) => (a === d.op ? -1 : b === d.op ? 1 : ordenarPt(d.opNome(a), d.opNome(b))));
+  const operacaoDe = (id: string): { id: string; nome: string; codigo?: string; logo?: string } => d.operacoes.filter((o) => o.id === id)[0] || { id, nome: d.opNome(id) };
+  const alternarGrupo = (id: string): void => setFechados((f) => ({ ...f, [id]: !f[id] }));
 
   const rotuloPedido = (p: IPedido): string => `Ver a operação ${d.opNome(pedidoOp(p.tipo))}`;
 
@@ -155,7 +162,7 @@ export const Usuarios: React.FC<{ d: IDados; listasOk: boolean }> = ({ d, listas
       )}
 
       <Cartao
-        titulo={`Coordenadores do headcount (${coordenadores.length})`}
+        titulo={`Coordenadores do headcount por operação (${coordenadores.length})`}
         acao={
           semEmail > 0 ? (
             <button type="button" className={styles.botao} disabled={!!buscando} onClick={() => buscarFaltantes().catch(() => undefined)}>
@@ -191,41 +198,70 @@ export const Usuarios: React.FC<{ d: IDados; listasOk: boolean }> = ({ d, listas
         {coordenadores.length === 0 ? (
           <Vazio icone="People" titulo={d.gestores.length ? 'Nenhum coordenador com esses filtros' : 'Nenhum coordenador ainda'} texto={d.gestores.length ? undefined : 'Importe o headcount em Headcount: os gestores da planilha viram coordenadores.'} />
         ) : (
-          <div className={styles.tabelaRolagem}>
-            <table className={styles.tabelaEsq}>
-              <thead>
-                <tr>
-                  <th>Operação</th>
-                  <th>Gestor no headcount</th>
-                  <th className={styles.num}>Colaboradores</th>
-                  <th>E-mail vinculado</th>
-                  <th>No diretório</th>
-                </tr>
-              </thead>
-              <tbody>
-                {coordenadores.map((g) => (
-                  <tr key={`${g.op}|${g.g}`}>
-                    <td>{d.opNome(g.op)}</td>
-                    <td>
-                      <b>{g.g}</b>
-                    </td>
-                    <td className={styles.num}>{int(g.n)}</td>
-                    <td>
-                      <input
-                        key={g.email}
-                        type="email"
-                        defaultValue={g.email}
-                        placeholder="nome.sobrenome@dhl.com"
-                        aria-label={`E-mail de ${g.g}`}
-                        style={{ width: 260, padding: '6px 8px', border: '1px solid #c9ced6', borderRadius: 6 }}
-                        onBlur={(e) => vincular(g, e.target.value).catch(() => undefined)}
-                      />
-                    </td>
-                    <td>{g.email ? g.nome || '—' : <span className={styles.selo}>SEM E-MAIL</span>}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className={styles.gruposOp}>
+            {idsOp.map((id) => {
+              const o = operacaoDe(id);
+              const lista = coordenadores.filter((g) => g.op === id);
+              const todos = d.gestores.filter((g) => g.op === id);
+              const faltam = todos.filter((g) => !g.email).length;
+              const aberto = !fechados[id];
+              return (
+                <section key={id} className={styles.grupoOp}>
+                  <button type="button" className={styles.grupoOpTopo} aria-expanded={aberto} onClick={() => alternarGrupo(id)}>
+                    <span className={styles.grupoOpLogo}>
+                      <LogoOperacao op={o} className={styles.grupoOpMono} />
+                    </span>
+                    <span className={styles.grupoOpTexto}>
+                      <b>{rotuloOperacao(o)}</b>
+                      <small>
+                        {int(todos.length)} coordenador{todos.length === 1 ? '' : 'es'} · {int(todos.reduce((t, g) => t + (g.n || 0), 0))} colaboradores
+                        {id === d.op ? ' · operação aberta no portal' : ''}
+                      </small>
+                    </span>
+                    <span className={styles.grupoOpNumeros}>
+                      {faltam > 0 ? <span className={styles.selo}>{faltam} SEM E-MAIL</span> : <span className={styles.seloOk}>TODOS VINCULADOS</span>}
+                    </span>
+                    <Icon iconName={aberto ? 'ChevronUp' : 'ChevronDown'} className={styles.grupoOpSeta} />
+                  </button>
+                  {aberto && (
+                    <div className={styles.tabelaRolagem}>
+                      <table className={styles.tabelaEsq}>
+                        <thead>
+                          <tr>
+                            <th>Gestor no headcount</th>
+                            <th className={styles.num}>Colaboradores</th>
+                            <th>E-mail vinculado</th>
+                            <th>No diretório</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {lista.map((g) => (
+                            <tr key={`${g.op}|${g.g}`}>
+                              <td>
+                                <b>{g.g}</b>
+                              </td>
+                              <td className={styles.num}>{int(g.n)}</td>
+                              <td>
+                                <input
+                                  key={g.email}
+                                  type="email"
+                                  defaultValue={g.email}
+                                  placeholder="nome.sobrenome@dhl.com"
+                                  aria-label={`E-mail de ${g.g}`}
+                                  style={{ width: 260, padding: '6px 8px', border: '1px solid #c9ced6', borderRadius: 6 }}
+                                  onBlur={(e) => vincular(g, e.target.value).catch(() => undefined)}
+                                />
+                              </td>
+                              <td>{g.email ? g.nome || '—' : <span className={styles.selo}>SEM E-MAIL</span>}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </section>
+              );
+            })}
           </div>
         )}
       </Cartao>
