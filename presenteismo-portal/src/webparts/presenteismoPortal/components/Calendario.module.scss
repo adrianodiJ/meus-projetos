@@ -51,7 +51,7 @@ $fonte: 'Segoe UI', 'Segoe UI Web (West European)', -apple-system, BlinkMacSyste
 
 // ---------------------------------------------------------------- janela
 .janela {
-  width: min(880px, 96vw);
+  width: min(1180px, 96vw);
   max-height: 94vh;
   border-radius: 16px;
   overflow: hidden;
@@ -296,11 +296,34 @@ $fonte: 'Segoe UI', 'Segoe UI Web (West European)', -apple-system, BlinkMacSyste
   flex: 1;
 }
 
+.meses {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+  gap: 18px 28px;
+}
+
+.mes h3 {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0 0 6px;
+  font-size: 15px;
+  font-weight: 800;
+  text-transform: capitalize;
+  color: $texto;
+
+  small {
+    font-size: 11.5px;
+    font-weight: 600;
+    text-transform: none;
+    color: $suave;
+  }
+}
+
 .grade {
   display: grid;
-  grid-template-columns: repeat(7, minmax(84px, 1fr));
-  gap: 6px;
-  min-width: 620px;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
 }
 
 .diaSemana {
@@ -325,16 +348,19 @@ button.diaSemana {
 }
 
 .diaFora {
-  min-height: 62px;
-  padding: 8px 10px;
+  min-height: 74px;
+  padding: 6px 7px;
+  border-radius: 9px;
+  background: #f7f8fa;
   font-size: 13px;
-  color: #d4d7dd;
+  font-weight: 600;
+  color: #c3c7ce;
 }
 
 .dia {
-  min-height: 62px;
-  padding: 7px 8px 8px;
-  border-radius: 10px;
+  min-height: 74px;
+  padding: 5px 6px 6px;
+  border-radius: 9px;
   border: 1px solid $borda;
   background: #fff;
   transition: border-color 0.12s ease, background 0.12s ease;
@@ -360,8 +386,8 @@ button.diaSemana {
   border: 0;
   background: none;
   padding: 0;
-  margin-bottom: 6px;
-  font: 700 15px $fonte;
+  margin-bottom: 4px;
+  font: 700 14px $fonte;
   color: $texto;
   cursor: pointer;
 
@@ -379,18 +405,18 @@ button.diaSemana {
 
 .pilulas {
   display: flex;
-  gap: 3px;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .pilula {
-  flex: 1 1 0;
-  min-width: 0;
-  height: 20px;
+  width: 100%;
+  height: 15px;
   padding: 0;
-  border-radius: 6px;
+  border-radius: 4px;
   border: 1px solid #e3e5e9;
   background: #fff;
-  font: 700 9.5px $fonte;
+  font: 700 9px $fonte;
   color: #b0b5bd;
   cursor: pointer;
   transition: background 0.1s ease;
@@ -524,11 +550,9 @@ button.diaSemana {
     padding: 12px 12px 6px;
   }
 
-  // os 7 dias cabem na tela: pílulas empilhadas e menores
-  .grade {
-    grid-template-columns: repeat(7, minmax(0, 1fr));
-    gap: 4px;
-    min-width: 0;
+  // meses um embaixo do outro; os 7 dias cabem na tela
+  .meses {
+    grid-template-columns: 1fr;
   }
 
   .diaSemana {
@@ -539,28 +563,7 @@ button.diaSemana {
   .dia,
   .diaFora {
     min-height: 0;
-    padding: 5px 4px;
-    border-radius: 8px;
-  }
-
-  .diaNumero {
-    font-size: 13px;
-    margin-bottom: 4px;
-
-    small {
-      display: none;
-    }
-  }
-
-  .pilulas {
-    flex-direction: column;
-    gap: 2px;
-  }
-
-  .pilula {
-    height: 15px;
-    font-size: 8.5px;
-    border-radius: 4px;
+    padding: 4px;
   }
 
   .rodape {

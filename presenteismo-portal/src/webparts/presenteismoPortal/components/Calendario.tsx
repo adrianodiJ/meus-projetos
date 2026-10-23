@@ -63,10 +63,15 @@ const JanelaCalendario: React.FC<{ d: IDados; onFechar: () => void }> = ({ d, on
   /** dias marcados que entram no cálculo deste mês (dentro da folha) */
   const escolhidos = diasEscolhidos(recorte(m, ini0, fim0));
 
-  // grade: semanas completas (domingo a sábado) em volta da folha
-  const inicioGrade = iso(new Date(dt(ini0).getTime() - dt(ini0).getDay() * 864e5));
-  const fimGrade = iso(new Date(dt(fim0).getTime() + (6 - dt(fim0).getDay()) * 864e5));
-  const grade = dias(inicioGrade, fimGrade);
+  // meses normais do calendário que a folha atravessa (ex.: setembro e outubro para a folha de outubro)
+  const mesesDaFolha: string[] = [];
+  for (let x = new Date(dt(ini0).getFullYear(), dt(ini0).getMonth(), 1); iso(x) <= fim0; x = new Date(x.getFullYear(), x.getMonth() + 1, 1)) {
+    mesesDaFolha.push(iso(x).slice(0, 7));
+  }
+  const diasDoMes = (ym: string): string[] => {
+    const [yy, mm] = ym.split('-').map(Number);
+    return dias(iso(new Date(yy, mm - 1, 1)), iso(new Date(yy, mm, 0)));
+  };
 
   const diferentes = (a: IMarcacao, b: IMarcacao): string[] =>
     Array.from(new Set([...Object.keys(a), ...Object.keys(b)])).filter((k) => TURNOS.some((t) => conta(a, k, t) !== conta(b, k, t)));
@@ -248,67 +253,90 @@ const JanelaCalendario: React.FC<{ d: IDados; onFechar: () => void }> = ({ d, on
       )}
 
       <div className={styles.corpo}>
-        <div className={styles.grade}>
-          {SEMANA.map((s, i) => {
-            const coluna = folha.filter((x) => dt(x).getDay() === i);
-            return editavel ? (
-              <button key={s} type="button" className={styles.diaSemana} title={`Marcar/desmarcar todas as ${s.toLowerCase()}s da folha`} onClick={() => alternar(coluna)}>
-                {s}
-              </button>
-            ) : (
-              <span key={s} className={styles.diaSemana}>
-                {s}
-              </span>
-            );
-          })}
-          {grade.map((dia) => {
-            if (dia < ini0 || dia > fim0) {
-              return (
-                <div key={dia} className={styles.diaFora} aria-hidden="true">
-                  {Number(dia.slice(8))}
-                </div>
-              );
-            }
-            const algum = TURNOS.some((t) => conta(m, dia, t));
-            const rotuloMes = dia === ini0 || dia.slice(8) === '01';
+        <div className={styles.meses}>
+          {mesesDaFolha.map((ym) => {
+            const doMes = diasDoMes(ym);
+            const naFolha = doMes.filter((x) => x >= ini0 && x <= fim0);
             return (
-              <div key={dia} className={`${styles.dia} ${algum ? styles.diaOn : ''} ${dia === hoje ? styles.diaHoje : ''}`}>
-                <button
-                  type="button"
-                  className={styles.diaNumero}
-                  disabled={!editavel}
-                  title={editavel ? `Marcar/desmarcar ${fmt(dia)} (${rotuloAlvo})` : fmt(dia)}
-                  onClick={() => alternar([dia])}
-                >
-                  {Number(dia.slice(8))}
-                  {rotuloMes && <small>{mesAbrev(dia)}</small>}
-                </button>
-                <div className={styles.pilulas}>
-                  {TURNOS.map((t) => {
-                    const on = conta(m, dia, t);
-                    return (
+              <section key={ym} className={styles.mes}>
+                <h3>
+                  {nomeMes(ym)}
+                  <small>
+                    dias {Number(naFolha[0].slice(8))} a {Number(naFolha[naFolha.length - 1].slice(8))} na folha
+                  </small>
+                </h3>
+                <div className={styles.grade}>
+                  {SEMANA.map((sem, i) => {
+                    const coluna = naFolha.filter((x) => dt(x).getDay() === i);
+                    return editavel ? (
                       <button
-                        key={t}
+                        key={sem}
                         type="button"
-                        disabled={!editavel}
-                        aria-pressed={on}
-                        aria-label={`${ROTULO_TURNO[t]} em ${fmt(dia)}: ${on ? 'conta' : 'não conta'}`}
-                        title={`${ROTULO_TURNO[t]}: ${on ? 'conta' : 'não conta'}`}
-                        className={`${styles.pilula} ${on ? styles.pilulaOn : ''}`}
-                        onClick={() => aplicar([dia], [t], !on)}
+                        className={styles.diaSemana}
+                        title={`Marcar/desmarcar todas as ${sem.toLowerCase()}s da folha em ${nomeMes(ym)}`}
+                        onClick={() => alternar(coluna)}
                       >
-                        {CURTO[t]}
+                        {sem}
                       </button>
+                    ) : (
+                      <span key={sem} className={styles.diaSemana}>
+                        {sem}
+                      </span>
+                    );
+                  })}
+                  {Array.from({ length: dt(doMes[0]).getDay() }).map((_, i) => (
+                    <span key={`v${i}`} />
+                  ))}
+                  {doMes.map((dia) => {
+                    if (dia < ini0 || dia > fim0) {
+                      return (
+                        <div key={dia} className={styles.diaFora} title="Fora da folha deste mês" aria-hidden="true">
+                          {Number(dia.slice(8))}
+                        </div>
+                      );
+                    }
+                    const algum = TURNOS.some((t) => conta(m, dia, t));
+                    return (
+                      <div key={dia} className={`${styles.dia} ${algum ? styles.diaOn : ''} ${dia === hoje ? styles.diaHoje : ''}`}>
+                        <button
+                          type="button"
+                          className={styles.diaNumero}
+                          disabled={!editavel}
+                          title={editavel ? `Marcar/desmarcar ${fmt(dia)} (${rotuloAlvo})` : fmt(dia)}
+                          onClick={() => alternar([dia])}
+                        >
+                          {Number(dia.slice(8))}
+                        </button>
+                        <div className={styles.pilulas}>
+                          {TURNOS.map((t) => {
+                            const on = conta(m, dia, t);
+                            return (
+                              <button
+                                key={t}
+                                type="button"
+                                disabled={!editavel}
+                                aria-pressed={on}
+                                aria-label={`${ROTULO_TURNO[t]} em ${fmt(dia)}: ${on ? 'conta' : 'não conta'}`}
+                                title={`${ROTULO_TURNO[t]}: ${on ? 'conta' : 'não conta'}`}
+                                className={`${styles.pilula} ${on ? styles.pilulaOn : ''}`}
+                                onClick={() => aplicar([dia], [t], !on)}
+                              >
+                                {CURTO[t]}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
                     );
                   })}
                 </div>
-              </div>
+              </section>
             );
           })}
         </div>
         <p className={styles.dica}>
           {editavel
-            ? 'Clique no número do dia para marcar ou desmarcar os turnos escolhidos acima, no nome do dia da semana para a coluna inteira, ou na pílula para um turno só.'
+            ? 'Os dias apagados ficam fora da folha deste mês. Clique no número do dia para marcar ou desmarcar os turnos escolhidos acima, no nome do dia da semana para a coluna do mês, ou na pílula para um turno só.'
             : 'Só o administrador altera o calendário.'}
         </p>
       </div>
