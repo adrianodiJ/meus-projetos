@@ -120,7 +120,7 @@ export const Usuarios: React.FC<{ d: IDados; listasOk: boolean }> = ({ d, listas
   const rotuloPedido = (p: IPedido): string => `Ver a operação ${d.opNome(pedidoOp(p.tipo))}`;
 
   return (
-    <Pagina titulo="Usuários e acessos" subtitulo="Coordenadores vêm do headcount e administradores são os proprietários do site; aqui ficam os vínculos de e-mail e os pedidos de acesso a outras operações">
+    <Pagina titulo="Usuários e acessos">
       <div className={styles.kpis}>
         <Kpi valor={int(d.gestores.length)} legenda="Coordenadores" icone="People" cor="#1F6FD1" detalhe="gestores no headcount" />
         <Kpi valor={int(semEmail)} legenda="Sem e-mail vinculado" icone="Unknown" cor="#F28C00" detalhe={semEmail ? 'vinculam pelo nome no 1º acesso' : 'todos vinculados'} />
@@ -171,10 +171,6 @@ export const Usuarios: React.FC<{ d: IDados; listasOk: boolean }> = ({ d, listas
           ) : undefined
         }
       >
-        <p className={styles.mudo} style={{ margin: '0 0 12px' }}>
-          A cada upload do headcount esta lista é refeita a partir da coluna GESTOR: quem entra vira coordenador, quem sai deixa de ser, e a equipe segue a planilha. O e-mail é buscado no
-          diretório pelo nome; se ficar vazio, a pessoa é reconhecida pelo nome ao abrir o portal. O coordenador lança só a própria equipe e vê só as operações em que aparece.
-        </p>
         <div className={styles.filtros}>
           <div className={`${styles.buscaCampo} ${styles.filtroBusca}`}>
             <Icon iconName="Search" />
@@ -267,9 +263,6 @@ export const Usuarios: React.FC<{ d: IDados; listasOk: boolean }> = ({ d, listas
       </Cartao>
 
       <Cartao titulo={`Operações liberadas a coordenadores (${liberacoes.length})`}>
-        <p className={styles.mudo} style={{ margin: '0 0 12px' }}>
-          Coordenador só vê as operações em que aparece no headcount. Aqui ficam as outras que um administrador liberou a pedido dele.
-        </p>
         {liberacoes.length === 0 ? (
           <p className={styles.mudo} style={{ margin: 0 }}>
             Nenhuma liberação extra.

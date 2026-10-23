@@ -66,7 +66,7 @@ export const Acompanhamento: React.FC<{ d: IDados; onAbrirGestor: (g: string) =>
 
 
   return (
-    <Pagina titulo="Acompanhamento de gestores" subtitulo="Quem já lançou a lista de presença na data escolhida" acoes={acoes}>
+    <Pagina titulo="Acompanhamento de gestores" acoes={acoes}>
       <div className={styles.fileira}>
         <label className={styles.campo}>
           Data

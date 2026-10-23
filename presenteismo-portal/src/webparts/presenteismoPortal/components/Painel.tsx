@@ -117,11 +117,7 @@ export const Painel: React.FC<{ d: IDados }> = ({ d }) => {
           <div className={styles.fileira} style={{ justifyContent: 'space-between' }}>
             <span>
               <b>Nenhum dia escolhido para o cálculo de {d.ym.slice(5)}/{d.ym.slice(0, 4)}.</b>{' '}
-              <span className={styles.mudo}>
-                {d.admin
-                  ? 'Abra o calendário e marque os dias (de qualquer mês) que entram nas horas previstas.'
-                  : 'O administrador ainda não escolheu os dias deste mês no calendário.'}
-              </span>
+              {!d.admin && <span className={styles.mudo}>O administrador ainda não escolheu os dias deste mês no calendário.</span>}
             </span>
             <BotaoCalendario d={d} texto="Escolher dias" />
           </div>
