@@ -217,9 +217,9 @@ const JanelaCalendario: React.FC<{ d: IDados; onFechar: () => void }> = ({ d, on
             type="button"
             className={styles.acao}
             onClick={aplicarRegra}
-            title={`Domingo não conta; ADM folga aos sábados; 1º e 2º folgam os 2 primeiros sábados da folha (3 se houver 5) · para ${rotuloAlvo}`}
+            title={`Marca só a folha de ${nomeMes(d.ym)} (${fmt(ini0)} a ${fmt(fim0)}) pela regra: domingo não conta; ADM folga aos sábados; 1º e 2º folgam os 2 primeiros sábados da folha (3 se houver 5) · para ${rotuloAlvo}. Os outros meses não mudam.`}
           >
-            <Icon iconName="Lightbulb" /> Aplicar folha ponto
+            <Icon iconName="Lightbulb" /> Aplicar folha ponto de {mesAbrev(fim0)}/{fim0.slice(2, 4)}
           </button>
           <button ref={botaoMais} type="button" className={styles.acaoMais} aria-label="Mais ações" title="Mais ações" onClick={() => setMenuMais(true)}>
             ⋯
