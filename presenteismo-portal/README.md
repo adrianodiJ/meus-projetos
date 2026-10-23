@@ -6,7 +6,7 @@ banner, cartões de indicadores e tabelas) e as funcionalidades da demo de Prese
 | Tela | O que faz |
 | --- | --- |
 | Home | Banner, indicadores do mês, atalhos e últimos lançamentos |
-| Painel Presenteísmo | Anel do período, horas previstas x falta, evolução semanal, visão por turno, top ofensores por gestão, Top 10 ofensores e botão Calendário (dias que contam) |
+| Painel Presenteísmo | Anel do período, horas previstas x falta, evolução semanal, visão por turno, tendência de 12 meses (folha ponto), top ofensores por gestão, Top 10 ofensores e botão Calendário (dias que contam) |
 | Lançamento | Lista de presença por data/gestor/turno (Sim/Não, motivo, observação), lançamento retroativo |
 | Acompanhamento | Quem já lançou na data (completo/pendente), clique no gestor abre a lista dele |
 | Relatórios | Excel "Histórico ABS" e "Resumo + Lançamentos" |

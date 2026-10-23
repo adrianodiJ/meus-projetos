@@ -1,10 +1,12 @@
 import * as React from 'react';
 import styles from './QualityPortal.module.scss';
 import { calcular, periodoDoMes, pct, resumoPainel, somar } from '../lib/calculo';
-import { fmt, fp, int, num, ordenarPt, unicos } from '../lib/util';
-import { ROTULO_TURNO, TURNOS } from '../models';
+import { fmt, fp, int, iso, num, ordenarPt, unicos } from '../lib/util';
+import { type ILancamento, ROTULO_TURNO, TURNOS } from '../models';
 import { Anel, COR_OK, COR_RUIM, GraficoSemanal, Trilha } from './Charts';
 import { BotaoCalendario, diasNoCalculo } from './Calendario';
+import { GraficoTendencia } from './GraficoTendencia';
+import { calcularTendencia, intervaloTendencia } from '../lib/tendencia';
 import type { IDados } from './tipos';
 import { Aviso, BotaoAtualizar, Cartao, Kpi, Pagina } from './ui';
 
@@ -32,6 +34,27 @@ export const Painel: React.FC<{ d: IDados }> = ({ d }) => {
   );
 
   const r = React.useMemo(() => resumoPainel(d.equipe, d.lancMes, d.ym, d.params), [d.equipe, d.lancMes, d.ym, d.params]);
+
+  // tendência: lançamentos das folhas dos últimos 12 meses, buscados de uma vez (de novo quando os dados mudam)
+  const MESES_TENDENCIA = 12;
+  const [iniT, fimT] = intervaloTendencia(d.ym, MESES_TENDENCIA, d.params);
+  const chaveT = `${d.op}|${iniT}|${fimT}|${d.atualizadoEm ? d.atualizadoEm.getTime() : 0}`;
+  const [lancAno, setLancAno] = React.useState<{ chave: string; lancs: ILancamento[]; erro?: boolean } | undefined>(undefined);
+  React.useEffect(() => {
+    let vivo = true;
+    d.servicos.lancamentos
+      .periodo(d.op, iniT, fimT)
+      .then((lancs) => vivo && setLancAno({ chave: chaveT, lancs }))
+      .catch(() => vivo && setLancAno({ chave: chaveT, lancs: [], erro: true }));
+    return () => {
+      vivo = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chaveT]);
+  const pontosT = React.useMemo(
+    () => (lancAno ? calcularTendencia(d.equipe, lancAno.lancs, d.ym, MESES_TENDENCIA, d.params, iso(new Date())) : undefined),
+    [lancAno, d.equipe, d.ym, d.params]
+  );
 
   if (!d.hc.rows.length) {
     return (
@@ -139,6 +162,20 @@ export const Painel: React.FC<{ d: IDados }> = ({ d }) => {
           ))}
         </Cartao>
       </div>
+
+      <Cartao titulo={`Tendência · 12 meses até ${new Date(Number(d.ym.slice(0, 4)), Number(d.ym.slice(5, 7)) - 1, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}`}>
+        {!pontosT ? (
+          <p className={styles.mudo} style={{ margin: 0 }}>
+            Carregando os últimos 12 meses…
+          </p>
+        ) : lancAno && lancAno.erro ? (
+          <p className={styles.mudo} style={{ margin: 0 }}>
+            Não foi possível carregar os lançamentos dos meses anteriores. Clique em Atualizar para tentar de novo.
+          </p>
+        ) : (
+          <GraficoTendencia pontos={pontosT} meta={meta} atual={d.ym} onEscolher={(ym) => ym !== d.ym && d.setYm(ym)} />
+        )}
+      </Cartao>
 
       <div className={styles.grade2}>
         <Cartao titulo="Top ofensores por gestão">
