@@ -122,13 +122,21 @@ export class AcessosService {
    * ou administrador do conjunto de sites).
    */
   public async donoDoSite(): Promise<boolean> {
+    return (await this.permissoesNoSite()).gerenciar;
+  }
+
+  /**
+   * O que a conta pode fazer no site das listas: ler itens (ViewListItems, bit 1) e gerenciar o site
+   * (ManageWeb, bit 31). Quem só recebeu a página por link tem "acesso limitado": abre a página, mas não lê as
+   * listas — e o SharePoint responde "lista não existe" em vez de "sem permissão".
+   */
+  public async permissoesNoSite(): Promise<{ ler: boolean; gerenciar: boolean }> {
     try {
       const p = await this._sp.get<{ High?: string | number; Low?: string | number }>('web/effectiveBasePermissions');
-      // ManageWeb = bit 31 da parte baixa (0x40000000)
       const low = Number(p && p.Low) || 0;
-      return Math.floor(low / 0x40000000) % 2 === 1;
+      return { ler: low % 2 === 1, gerenciar: Math.floor(low / 0x40000000) % 2 === 1 };
     } catch {
-      return false;
+      return { ler: false, gerenciar: false };
     }
   }
 

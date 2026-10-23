@@ -90,6 +90,8 @@ export default function PresenteismoPortal(props: IPortalProps): JSX.Element {
   const [pedidos, setPedidos] = React.useState<IPedido[]>([]);
   const [gestores, setGestores] = React.useState<IGestor[]>([]);
   const [donoSite, setDonoSite] = React.useState(false);
+  /** a conta lê itens no site das listas? (sem isso as listas parecem "não existir") */
+  const [podeLerSite, setPodeLerSite] = React.useState(true);
   const [hist, setHist] = React.useState<IHistorico[]>([]);
   const [lancMes, setLancMes] = React.useState<ILancamento[]>([]);
   const [lancDia, setLancDia] = React.useState<ILancamento[]>([]);
@@ -153,13 +155,14 @@ export default function PresenteismoPortal(props: IPortalProps): JSX.Element {
       const id = ++reqRef.current;
       if (!silencioso) setAtualizando(true);
       try {
-        const [dono, us, ped, ops, ges] = await Promise.all([
-          servicos.acessos.donoDoSite(),
+        const [perm, us, ped, ops, ges] = await Promise.all([
+          servicos.acessos.permissoesNoSite(),
           servicos.acessos.usuarios(),
           servicos.acessos.pedidos(),
           servicos.dados.ler<{ list: IOperacao[] }>('cfg/ops'),
           servicos.dados.ler<IGestores>(DOC_GESTORES)
         ]);
+        const dono = perm.gerenciar;
         const lista = ops && ops.list && ops.list.length ? ops.list : [OPERACAO_PADRAO];
         const listaG = ges && Array.isArray(ges.list) ? ges.list : [];
         // a operação aberta precisa estar liberada (coordenador fica nas operações dele)
@@ -188,6 +191,7 @@ export default function PresenteismoPortal(props: IPortalProps): JSX.Element {
         setListasOk(us !== undefined);
         setUsuarios(us || []);
         setDonoSite(dono);
+        setPodeLerSite(perm.ler);
         setPedidos(ped);
         setGestores(listaG);
         setOperacoes(lista);
@@ -445,9 +449,14 @@ export default function PresenteismoPortal(props: IPortalProps): JSX.Element {
     );
   } else if (!listasOk && !admin) {
     conteudo = (
-      <div className={styles.centro}>
-        <Aviso titulo="Portal ainda não configurado" texto="As listas de dados do Presenteísmo ainda não foram criadas neste site. Peça ao administrador para abrir o portal e criar as listas em Administração." />
-      </div>
+      <SemAcesso
+        semPermissao={!podeLerSite}
+        email={email}
+        nome={usuario.nome}
+        site={servicos.sp.webUrl}
+        adminEmail={props.adminEmail}
+        onTentar={() => carregar().catch(() => undefined)}
+      />
     );
   } else {
     conteudo = (
@@ -663,3 +672,45 @@ export default function PresenteismoPortal(props: IPortalProps): JSX.Element {
     </div>
   );
 }
+
+/**
+ * Quem não consegue ler as listas: ou não tem permissão no site (o caso comum — a página foi compartilhada, o site
+ * não), ou as listas ainda não foram criadas. Mostra o que pedir e a quem.
+ */
+const SemAcesso: React.FC<{ semPermissao: boolean; email: string; nome: string; site: string; adminEmail: string; onTentar: () => void }> = ({
+  semPermissao,
+  email,
+  nome,
+  site,
+  adminEmail,
+  onTentar
+}) => {
+  const assunto = 'Acesso ao TeamPulse';
+  const corpo = `Olá! Preciso de acesso ao TeamPulse (presenteísmo).\n\nNome: ${nome}\nE-mail: ${email}\nSite: ${site}\n\nPor favor, me adicione em Visitantes do site (para ver os indicadores) ou em Membros do site (para lançar presença).`;
+  const mailto = `mailto:${adminEmail}?subject=${encodeURIComponent(assunto)}&body=${encodeURIComponent(corpo)}`;
+  return (
+    <div className={styles.centro}>
+      <div className={`${styles.cartao} ${styles.vazio2}`} style={{ maxWidth: 560 }}>
+        <h4>{semPermissao ? 'Você ainda não tem acesso aos dados do portal' : 'Não encontrei os dados do portal'}</h4>
+        <p>
+          {semPermissao
+            ? 'A sua conta abre a página, mas não tem permissão de leitura no site onde ficam os dados. O administrador precisa adicionar você ao site: em Visitantes, para ver os indicadores, ou em Membros, para lançar presença.'
+            : 'As listas de dados do portal não foram encontradas neste site. Se o administrador já criou as listas, peça para ele conferir se a sua conta tem acesso a elas (Visitantes ou Membros do site).'}
+        </p>
+        <p style={{ fontSize: 12, wordBreak: 'break-all' }}>
+          Sua conta: <b>{email || '—'}</b>
+          <br />
+          Site dos dados: <b>{site}</b>
+        </p>
+        <div className={styles.linhaBotoes} style={{ justifyContent: 'center', marginTop: 8 }}>
+          <a className={styles.botaoAmarelo} href={mailto} style={{ textDecoration: 'none', color: '#1d1f23' }}>
+            Pedir acesso por e-mail
+          </a>
+          <button type="button" className={styles.botao} onClick={onTentar}>
+            Tentar de novo
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};

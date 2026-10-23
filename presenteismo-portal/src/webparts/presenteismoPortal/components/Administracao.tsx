@@ -138,7 +138,7 @@ export const Administracao: React.FC<{ d: IDados; listasOk: boolean }> = ({ d, l
       <Cartao titulo="Listas do SharePoint">
         <p className={styles.mudo} style={{ margin: '0 0 10px' }}>
           {listasOk
-            ? 'As listas de dados do portal estão criadas neste site. Rode de novo se uma coluna tiver sido apagada: só o que falta é recriado.'
+            ? 'As listas de dados do portal estão criadas neste site. Rode de novo se uma coluna tiver sido apagada: só o que falta é recriado. Para alguém usar o portal, adicione a pessoa ao site (Visitantes para ver, Membros para lançar): compartilhar só a página não dá acesso aos dados.'
             : 'As listas de dados ainda não existem neste site. Crie-as agora (é preciso ser proprietário do site). As listas criadas são PRES_Dados, PRES_Usuarios, PRES_Pedidos, PRES_Lancamentos e PRES_Historico.'}
         </p>
         <button type="button" className={listasOk ? styles.botao : styles.botaoAmarelo} disabled={criando} onClick={() => criarListas().catch(() => undefined)}>
