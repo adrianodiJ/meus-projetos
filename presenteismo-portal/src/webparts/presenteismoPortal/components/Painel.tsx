@@ -21,7 +21,7 @@ export const Painel: React.FC<{ d: IDados }> = ({ d }) => {
         <input type="month" value={d.ym} onChange={(e) => e.target.value && d.setYm(e.target.value)} />
       </label>
       <span className={styles.fileiraNota}>
-        {fmt(ini)}/{ini.slice(0, 4)} a {fmt(fim)}/{fim.slice(0, 4)} · meta {fp(meta)} · só efetivos · só injustificadas e atestados
+        {fmt(ini)}/{ini.slice(0, 4)} a {fmt(fim)}/{fim.slice(0, 4)} · meta {fp(meta)}
       </span>
       <BotaoCalendario d={d} />
       <BotaoAtualizar atualizando={d.atualizando} atualizadoEm={d.atualizadoEm} onClick={() => d.recarregar().catch(() => undefined)} />
