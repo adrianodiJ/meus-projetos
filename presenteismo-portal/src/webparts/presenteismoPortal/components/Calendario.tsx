@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { ContextualMenu, DirectionalHint, Icon, Modal } from '@fluentui/react';
+import { ContextualMenu, ContextualMenuItemType, DirectionalHint, Icon, Modal } from '@fluentui/react';
 import styles from './Calendario.module.scss';
 import { conta, diasEscolhidos, type IMarcacao, marcacao, marcacaoDoMes, periodoFolha, recorte, regraFolhaPonto } from '../lib/calendario';
 import { dias, dt, ehTemp, fmt, int, iso, num } from '../lib/util';
@@ -120,6 +120,22 @@ const JanelaCalendario: React.FC<{ d: IDados; onFechar: () => void }> = ({ d, on
     else setAlvo(todosAlvo ? [t] : alvo.indexOf(t) >= 0 ? (alvo.length > 1 ? alvo.filter((x) => x !== t) : alvo) : TURNOS.filter((x) => x === t || alvo.indexOf(x) >= 0));
   };
 
+  /** apaga os dias marcados de todos os meses (para os turnos escolhidos), depois de confirmar */
+  const limparTudo = (): void => {
+    const marcados = diasEscolhidos(m).filter((x) => alvo.some((t) => conta(m, x, t)));
+    if (!marcados.length) {
+      window.alert('Não há dias marcados para limpar.');
+      return;
+    }
+    const meses = Array.from(new Set(marcados.map((x) => x.slice(0, 7)))).length;
+    const aviso =
+      `Desmarcar ${marcados.length} dia${marcados.length > 1 ? 's' : ''} em ${meses} ${meses > 1 ? 'meses' : 'mês'} do calendário (${rotuloAlvo})?\n\n` +
+      'Isso zera as horas previstas de todos os meses com esses dias. Nada é gravado até você clicar em Salvar; antes disso, Descartar desfaz.';
+    if (!window.confirm(aviso)) return;
+    aplicar(marcados, alvo, false);
+  };
+  const totalMarcados = diasEscolhidos(m).length;
+
   const sair = (acao: () => void): void => {
     if (pendentes && !window.confirm('Há dias marcados que ainda não foram salvos. Descartar?')) return;
     acao();
@@ -215,7 +231,16 @@ const JanelaCalendario: React.FC<{ d: IDados; onFechar: () => void }> = ({ d, on
               directionalHint={DirectionalHint.bottomRightEdge}
               items={[
                 { key: 'todos', text: `Marcar todos os dias da folha (${rotuloAlvo})`, iconProps: { iconName: 'CheckboxComposite' }, onClick: () => aplicar(folha, alvo, true) },
-                { key: 'limpar', text: `Limpar a folha (${rotuloAlvo})`, iconProps: { iconName: 'Delete' }, onClick: () => aplicar(folha, alvo, false) }
+                { key: 'limpar', text: `Limpar a folha (${rotuloAlvo})`, iconProps: { iconName: 'Delete' }, onClick: () => aplicar(folha, alvo, false) },
+                { key: 'div', itemType: ContextualMenuItemType.Divider },
+                {
+                  key: 'limparTudo',
+                  text: `Limpar todos os dias marcados${totalMarcados ? ` (${totalMarcados} em todos os meses)` : ''}`,
+                  secondaryText: todosAlvo ? undefined : rotuloAlvo,
+                  iconProps: { iconName: 'EraseTool', style: { color: '#d40511' } },
+                  disabled: totalMarcados === 0,
+                  onClick: limparTudo
+                }
               ]}
             />
           )}
